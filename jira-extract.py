@@ -6,6 +6,8 @@ import sys
 # For windows
 # $env:PASSWORD_JIRA='YourPassword'
 
+TDC_JIRA_BOARD_ID = 217
+
 def log(str):
     print(str)
 
@@ -14,7 +16,7 @@ def arguments():
     parser.add_argument('--sp','-sp', help='Sprint selection (default active sprint)')
     return parser
 
-def fool():
+def get_active_sprints():
     return
 
 if __name__ == '__main__':
@@ -30,6 +32,9 @@ if __name__ == '__main__':
 
     jql_str='project = TDC AND issuetype in (Bug, "New Feature", "Work Item") AND Sprint = "{}" ORDER BY labels ASC, RANK'.format("TDC Sprint 24")
     issues=jira.search_issues(jql_str, startAt=0, maxResults=500, validate_query=True, fields=None, expand=None, json_result=None)
+
+    print(jira.sprints(TDC_JIRA_BOARD_ID,extended=False, startAt=0, maxResults=50, state="active"))
+    
 
     for issue_names in issues:
         log('issue id - {}'.format(issue_names))
