@@ -6,6 +6,7 @@ import sys
 # For windows
 # $env:PASSWORD_JIRA='YourPassword'
 
+#tdc board = 217
 TDC_JIRA_BOARD_ID = 217
 
 def log(str):
@@ -13,11 +14,28 @@ def log(str):
 
 def arguments():
     parser = argparse.ArgumentParser(description='Launch extraction and process.')
-    parser.add_argument('--sp','-sp', help='Sprint selection (default active sprint)')
+    parser.add_argument('--sp','-sp', type=int,help='Sprint number selection (default active sprint)')
     return parser
 
-def get_active_sprints():
-    return
+def get_active_sprint(handler_jira):
+    active_sprint = handler_jira.sprints(TDC_JIRA_BOARD_ID,extended=False, startAt=0, maxResults=1, state="active")
+    if(len(active_sprint) ==0):
+        active_sprint = handler_jira.sprints(TDC_JIRA_BOARD_ID,extended=False, startAt=0, maxResults=1, state="future")
+        print("future sprint {} selected".format(active_sprint[0].name))
+    else:
+        print("active sprint {} selected".format(active_sprint[0].name))
+
+    return active_sprint[0].name
+
+def construct_jql_query(arg_sp, handler_jira):
+    jql_qry = 'project = TDC AND issuetype in (Bug, "New Feature", "Work Item") AND Sprint = "TDC Sprint 20" ORDER BY labels ASC, RANK'
+    if(arg_sp is not None):
+        print("Sprint \"TDC Sprint {}\" selected".format(arg_sp))
+        jql_qry='project = TDC AND issuetype in (Bug, "New Feature", "Work Item") AND Sprint = "TDC Sprint {}" ORDER BY labels ASC, RANK'.format(arg_sp)
+    else:
+        jql_qry='project = TDC AND issuetype in (Bug, "New Feature", "Work Item") AND Sprint = "{}" ORDER BY labels ASC, RANK'.format(get_active_sprint(handler_jira))
+
+    return jql_qry
 
 if __name__ == '__main__':
 
@@ -25,16 +43,11 @@ if __name__ == '__main__':
         log("Missing environment variable PASSWORD_JIRA.")
         sys.exit(1)
 
-    args = arguments().parse_args()
-
     jira_options={'server': 'https://jira.talendforge.org/','agile_rest_path': 'agile'}
     jira=JIRA(options=jira_options,basic_auth=('eguillossou',os.environ['PASSWORD_JIRA']))
+    issues=jira.search_issues(construct_jql_query(arguments().parse_args().sp,jira), startAt=0, maxResults=500, validate_query=True, fields=None, expand=None, json_result=None)
 
-    jql_str='project = TDC AND issuetype in (Bug, "New Feature", "Work Item") AND Sprint = "{}" ORDER BY labels ASC, RANK'.format("TDC Sprint 24")
-    issues=jira.search_issues(jql_str, startAt=0, maxResults=500, validate_query=True, fields=None, expand=None, json_result=None)
-
-    print(jira.sprints(TDC_JIRA_BOARD_ID,extended=False, startAt=0, maxResults=50, state="active"))
+    print("\nissues\n")
     
-
     for issue_names in issues:
         log('issue id - {}'.format(issue_names))
