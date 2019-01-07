@@ -48,6 +48,20 @@ if __name__ == '__main__':
     issues=jira.search_issues(construct_jql_query(arguments().parse_args().sp,jira), startAt=0, maxResults=500, validate_query=True, fields=None, expand=None, json_result=None)
 
     print("\nissues\n")
+
+    #Column to fill
+    # Issue type	Issue key	Summary	Custom field (Story Points)	Status	Priority	Sprint	Already started before	Added after started
+
     
-    for issue_names in issues:
-        log('issue id - {}'.format(issue_names))
+    for issue_ids in issues:
+        log(issue_ids.fields.issuetype.name)
+        log(issue_ids.key)
+        log(issue_ids.fields.summary)
+        log(issue_ids.fields.customfield_10150)
+        log(issue_ids.fields.status.name)
+        log(issue_ids.fields.priority.name)
+        log(issue_ids.fields.customfield_11070)
+
+        # import pdb;pdb.set_trace()
+        # for issue in issue_ids:
+        #     log(issue.fields)
