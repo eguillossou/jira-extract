@@ -2,6 +2,8 @@ from jira import JIRA
 import argparse
 import os
 import sys
+from openpyxl import Workbook
+import re
 
 # For windows
 # $env:PASSWORD_JIRA='YourPassword'
@@ -21,19 +23,20 @@ def get_active_sprint(handler_jira):
     active_sprint = handler_jira.sprints(TDC_JIRA_BOARD_ID,extended=False, startAt=0, maxResults=1, state="active")
     if(len(active_sprint) ==0):
         active_sprint = handler_jira.sprints(TDC_JIRA_BOARD_ID,extended=False, startAt=0, maxResults=1, state="future")
-        print("future sprint {} selected".format(active_sprint[0].name))
+        print("Future sprint {} selected".format(active_sprint[0].name))
     else:
-        print("active sprint {} selected".format(active_sprint[0].name))
+        print("Active sprint {} selected".format(active_sprint[0].name))
 
     return active_sprint[0].name
 
-def construct_jql_query(arg_sp, handler_jira):
-    jql_qry = 'project = TDC AND issuetype in (Bug, "New Feature", "Work Item") AND Sprint = "TDC Sprint 20" ORDER BY labels ASC, RANK'
+def get_selected_sprint_number(arg_sp, handler_jira):
     if(arg_sp is not None):
-        print("Sprint \"TDC Sprint {}\" selected".format(arg_sp))
-        jql_qry='project = TDC AND issuetype in (Bug, "New Feature", "Work Item") AND Sprint = "TDC Sprint {}" ORDER BY labels ASC, RANK'.format(arg_sp)
+        return arg_sp
     else:
-        jql_qry='project = TDC AND issuetype in (Bug, "New Feature", "Work Item") AND Sprint = "{}" ORDER BY labels ASC, RANK'.format(get_active_sprint(handler_jira))
+        return re.findall(r"\d+",get_active_sprint(handler_jira))[0]
+
+def construct_jql_query(sp_nb, handler_jira):
+    jql_qry='project = TDC AND issuetype in (Bug, "New Feature", "Work Item") AND Sprint = "TDC Sprint {}" ORDER BY labels ASC, RANK'.format(sp_nb)
 
     return jql_qry
 
@@ -45,7 +48,8 @@ if __name__ == '__main__':
 
     jira_options={'server': 'https://jira.talendforge.org/','agile_rest_path': 'agile'}
     jira=JIRA(options=jira_options,basic_auth=('eguillossou',os.environ['PASSWORD_JIRA']))
-    issues=jira.search_issues(construct_jql_query(arguments().parse_args().sp,jira), startAt=0, maxResults=500, validate_query=True, fields=None, expand=None, json_result=None)
+    sp_nb =  get_selected_sprint_number(arguments().parse_args().sp, jira)
+    issues=jira.search_issues(construct_jql_query(sp_nb,jira), startAt=0, maxResults=500, validate_query=True, fields=None, expand=None, json_result=None)
 
     print("\nissues\n")
 
@@ -55,13 +59,20 @@ if __name__ == '__main__':
     
     for issue_ids in issues:
         log(issue_ids.fields.issuetype.name)
-        log(issue_ids.key)
-        log(issue_ids.fields.summary)
-        log(issue_ids.fields.customfield_10150)
-        log(issue_ids.fields.status.name)
-        log(issue_ids.fields.priority.name)
-        log(issue_ids.fields.customfield_11070)
+        # log(issue_ids.key)
+        # log(issue_ids.fields.summary)
+        # log(issue_ids.fields.customfield_10150)
+        # log(issue_ids.fields.status.name)
+        # log(issue_ids.fields.priority.name)
+        # log(issue_ids.fields.customfield_11070)
 
         # import pdb;pdb.set_trace()
         # for issue in issue_ids:
         #     log(issue.fields)
+
+    wb = Workbook()
+    ws = wb.active
+    ws1 = wb.create_sheet("Data")
+    ws.append([1, 2, 3])
+    print(sp_nb)
+    wb.save("c:\\Users\\eguillossou\\jira-report{}.xlsx".format(sp_nb))
