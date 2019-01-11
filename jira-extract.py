@@ -43,8 +43,44 @@ def construct_jql_query(sp_nb, handler_jira):
 def fill_header(ws_in, header_list_in):
     [ expression(ws_in, title, header_list_in.index(title)) for title in header_list_in]
 
+def construct_datas(issues_in, header_list_in):
+    len(header_list)
+    matrix = [title for title in header_list_in]
+    values_issues = [
+        [issue_ids.fields.issuetype.name, 
+        issue_ids.key, 
+        issue_ids.fields.summary, 
+        issue_ids.fields.customfield_10150, 
+        issue_ids.fields.status.name, 
+        issue_ids.fields.priority.name,
+        issue_ids.fields.customfield_11070] for issue_ids in issues ]
+
+    # values_issues = [
+    #     log([issue_ids.fields.issuetype.name, 
+    #     issue_ids.key, 
+    #     issue_ids.fields.summary, 
+    #     issue_ids.fields.customfield_10150, 
+    #     issue_ids.fields.status.name, 
+    #     issue_ids.fields.priority.name,
+    #     issue_ids.fields.customfield_11070]) for issue_ids in issues ]
+
+    matrix = [values_issues for title in header_list_in]
+
+    return matrix
+
 def expression(ws_in, title_in, column_nb_in):
     ws_in.cell(row=1, column=column_nb_in+1).value = title_in
+
+def getColumn(lst, col):
+    return [i[col] for i in lst]
+
+def fill_datas(ws_in, matrix_in):
+    for idx in range(len(matrix_in)):
+        for idy in range(len(matrix_in[0])):
+            ws_in.cell(row=idx, column=idy).value = matrix_in[idx][idy]
+            print("fill rowidx={}, colidy={}, value={}".format(idx, idy, matrix_in[idx][idy]))
+
+    # [ expression(ws_in, title, header_list_in.index(title)) for idx in len(matrix_in[0])]
 
 if __name__ == '__main__':
 
@@ -65,12 +101,13 @@ if __name__ == '__main__':
     
     for issue_ids in issues:
         log(issue_ids.fields.issuetype.name)
-        # log(issue_ids.key)
-        # log(issue_ids.fields.summary)
-        # log(issue_ids.fields.customfield_10150)
-        # log(issue_ids.fields.status.name)
-        # log(issue_ids.fields.priority.name)
-        # log(issue_ids.fields.customfield_11070)
+        log(issue_ids.key)
+        log(issue_ids.fields.summary)
+        log(issue_ids.fields.customfield_10150)
+        log(issue_ids.fields.status.name)
+        log(issue_ids.fields.priority.name)
+        log(', '.join(re.findall(r"name=[^,]+",str(issue_ids.fields.customfield_11070) )).replace("name=",""))
+        # log(str(issue_ids.fields.customfield_11070[0]))
 
         # import pdb;pdb.set_trace()
         # for issue in issue_ids:
@@ -80,7 +117,9 @@ if __name__ == '__main__':
     ws = wb.active
     ws1 = wb.create_sheet("Data")
     header_list = ["Issue type", "Issue key", "Summary", "Custom field (Story Points)", "Status", "Priority", "Sprint", "Already started before", "Added after started"]
-    fill_header(ws1,header_list)
-    ws1.append([1, 2, 3])
+    
+    # fill_header(ws1,header_list)
+    # fill_datas(ws1, construct_datas(issues, header_list))
+    # ws1.append([1, 2, 3])
     print(sp_nb)
-    wb.save("c:\\Users\\eguillossou\\jira-report{}.xlsx".format(sp_nb))
+    # wb.save("c:\\Users\\eguillossou\\jira-report{}.xlsx".format(sp_nb))
