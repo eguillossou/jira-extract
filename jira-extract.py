@@ -40,6 +40,12 @@ def construct_jql_query(sp_nb, handler_jira):
 
     return jql_qry
 
+def fill_header(ws_in, header_list_in):
+    [ expression(ws_in, title, header_list_in.index(title)) for title in header_list_in]
+
+def expression(ws_in, title_in, column_nb_in):
+    ws_in.cell(row=1, column=column_nb_in+1).value = title_in
+
 if __name__ == '__main__':
 
     if('PASSWORD_JIRA' not in os.environ):
@@ -73,6 +79,8 @@ if __name__ == '__main__':
     wb = Workbook()
     ws = wb.active
     ws1 = wb.create_sheet("Data")
-    ws.append([1, 2, 3])
+    header_list = ["Issue type", "Issue key", "Summary", "Custom field (Story Points)", "Status", "Priority", "Sprint", "Already started before", "Added after started"]
+    fill_header(ws1,header_list)
+    ws1.append([1, 2, 3])
     print(sp_nb)
     wb.save("c:\\Users\\eguillossou\\jira-report{}.xlsx".format(sp_nb))
