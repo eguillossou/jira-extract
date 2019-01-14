@@ -43,9 +43,10 @@ def construct_jql_query(sp_nb, handler_jira):
 def fill_header(ws_in, header_list_in):
     [ expression(ws_in, title, header_list_in.index(title)) for title in header_list_in]
 
+def pad_or_truncate(some_list, target_len):
+    return some_list[:target_len] + [0]*(target_len - len(some_list))
+
 def construct_datas(issues_in, header_list_in):
-    len(header_list)
-    matrix = [title for title in header_list_in]
     values_issues = [
         [issue_ids.fields.issuetype.name, 
         issue_ids.key, 
@@ -53,34 +54,33 @@ def construct_datas(issues_in, header_list_in):
         issue_ids.fields.customfield_10150, 
         issue_ids.fields.status.name, 
         issue_ids.fields.priority.name,
-        issue_ids.fields.customfield_11070] for issue_ids in issues ]
+        parse_sprints(issue_ids.fields.customfield_11070)] for issue_ids in issues_in ]
+    issues_according_to_header_list = [pad_or_truncate(values_issues[idx],len(header_list_in)) for idx in range(len(values_issues)) ]
 
-    # values_issues = [
-    #     log([issue_ids.fields.issuetype.name, 
-    #     issue_ids.key, 
-    #     issue_ids.fields.summary, 
-    #     issue_ids.fields.customfield_10150, 
-    #     issue_ids.fields.status.name, 
-    #     issue_ids.fields.priority.name,
-    #     issue_ids.fields.customfield_11070]) for issue_ids in issues ]
+    return issues_according_to_header_list
 
-    matrix = [values_issues for title in header_list_in]
+def expression(ws_in, header_list_in, column_nb_in):
+    ws_in.cell(row=1, column=column_nb_in+1).value = header_list_in[column_nb_in]
+    # log("fill rowidx=1, colidy={}, value={}".format(column_nb_in+1, header_list_in[column_nb_in]))
 
-    return matrix
+# def getColumn(lst, col):
+#     return [i[col] for i in lst]
 
-def expression(ws_in, title_in, column_nb_in):
-    ws_in.cell(row=1, column=column_nb_in+1).value = title_in
+def fill_datas(ws_in, header_list_in, issues_in):
+    issues_line = construct_datas(issues_in, header_list_in)
+    #add one line +1 for headers:
+    for lineidx in range(len(issues_in)):
+            if(lineidx == 0):
+                [(expression(ws_in, header_list_in, idx)) for idx in range(len(header_list_in))]
+            else:
+                for linecol in range(len(header_list_in)):
+                    #excel cells starting at indexes 1,1
+                    ws_in.cell(row=lineidx+1, column=linecol+1).value = issues_line[lineidx][linecol]
+                    # log("fill rowidx excel={}, colidy excel={}, value={}".format(lineidx+1,linecol+1, issues_line[lineidx][linecol]))
 
-def getColumn(lst, col):
-    return [i[col] for i in lst]
 
-def fill_datas(ws_in, matrix_in):
-    for idx in range(len(matrix_in)):
-        for idy in range(len(matrix_in[0])):
-            ws_in.cell(row=idx, column=idy).value = matrix_in[idx][idy]
-            print("fill rowidx={}, colidy={}, value={}".format(idx, idy, matrix_in[idx][idy]))
-
-    # [ expression(ws_in, title, header_list_in.index(title)) for idx in len(matrix_in[0])]
+def parse_sprints(field_11070):
+    return ', '.join(re.findall(r"name=[^,]+",str(field_11070) )).replace("name=","")
 
 if __name__ == '__main__':
 
@@ -93,33 +93,13 @@ if __name__ == '__main__':
     sp_nb =  get_selected_sprint_number(arguments().parse_args().sp, jira)
     issues=jira.search_issues(construct_jql_query(sp_nb,jira), startAt=0, maxResults=500, validate_query=True, fields=None, expand=None, json_result=None)
 
-    print("\nissues\n")
+    wb = Workbook()
+    ws1 = wb.create_sheet("Data")
 
     #Column to fill
     # Issue type	Issue key	Summary	Custom field (Story Points)	Status	Priority	Sprint	Already started before	Added after started
-
-    
-    for issue_ids in issues:
-        log(issue_ids.fields.issuetype.name)
-        log(issue_ids.key)
-        log(issue_ids.fields.summary)
-        log(issue_ids.fields.customfield_10150)
-        log(issue_ids.fields.status.name)
-        log(issue_ids.fields.priority.name)
-        log(', '.join(re.findall(r"name=[^,]+",str(issue_ids.fields.customfield_11070) )).replace("name=",""))
-        # log(str(issue_ids.fields.customfield_11070[0]))
-
-        # import pdb;pdb.set_trace()
-        # for issue in issue_ids:
-        #     log(issue.fields)
-
-    wb = Workbook()
-    ws = wb.active
-    ws1 = wb.create_sheet("Data")
     header_list = ["Issue type", "Issue key", "Summary", "Custom field (Story Points)", "Status", "Priority", "Sprint", "Already started before", "Added after started"]
     
-    # fill_header(ws1,header_list)
-    # fill_datas(ws1, construct_datas(issues, header_list))
-    # ws1.append([1, 2, 3])
-    print(sp_nb)
-    # wb.save("c:\\Users\\eguillossou\\jira-report{}.xlsx".format(sp_nb))
+    fill_datas(ws1, header_list, issues)
+    print("Sprint number : {}".format(sp_nb))
+    wb.save("c:\\Users\\eguillossou\\jira-report{}.xlsx".format(sp_nb))
