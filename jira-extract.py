@@ -31,7 +31,7 @@ def get_active_sprint(handler_jira):
 
 def get_selected_sprint_number(arg_sp, handler_jira):
     if(arg_sp is not None):
-        return arg_sp
+        return int(arg_sp)
     else:
         return re.findall(r"\d+",get_active_sprint(handler_jira))[0]
 
@@ -46,18 +46,33 @@ def fill_header(ws_in, header_list_in):
 def pad_or_truncate(some_list, target_len):
     return some_list[:target_len] + [0]*(target_len - len(some_list))
 
-def construct_datas(issues_in, header_list_in):
-    values_issues = [
-        [issue_ids.fields.issuetype.name, 
-        issue_ids.key, 
-        issue_ids.fields.summary, 
-        issue_ids.fields.customfield_10150, 
-        issue_ids.fields.status.name, 
-        issue_ids.fields.priority.name,
-        parse_sprints(issue_ids.fields.customfield_11070)] for issue_ids in issues_in ]
+def if_already_started(sprints_list_in,sprint_number_in):
+    result = re.search(r"\d+",sprints_list_in.split(',')[0])
+    if result is not None and int(result.group(0)) < sprint_number_in:
+        return(True)
+    else:
+        return(False)
+
+def parse_sprints(field_11070):
+    return ', '.join(re.findall(r"name=[^,]+",str(field_11070) )).replace("name=","")
+
+def construct_datas(issues_in, header_list_in, sprint_number_in):
+
+    values_issues = [ fillIT(issue_ids, sprint_number_in) for issue_ids in issues_in ]
     issues_according_to_header_list = [pad_or_truncate(values_issues[idx],len(header_list_in)) for idx in range(len(values_issues)) ]
 
     return issues_according_to_header_list
+
+def fillIT(issue_ids_in, sprint_number_in):
+    sprint_list = parse_sprints(issue_ids_in.fields.customfield_11070)
+    return [issue_ids_in.fields.issuetype.name, 
+            issue_ids_in.key, 
+            issue_ids_in.fields.summary, 
+            issue_ids_in.fields.customfield_10150, 
+            issue_ids_in.fields.status.name, 
+            issue_ids_in.fields.priority.name, 
+            sprint_list, 
+            if_already_started(sprint_list, sprint_number_in)]
 
 def expression(ws_in, header_list_in, column_nb_in):
     ws_in.cell(row=1, column=column_nb_in+1).value = header_list_in[column_nb_in]
@@ -66,8 +81,8 @@ def expression(ws_in, header_list_in, column_nb_in):
 # def getColumn(lst, col):
 #     return [i[col] for i in lst]
 
-def fill_datas(ws_in, header_list_in, issues_in):
-    issues_line = construct_datas(issues_in, header_list_in)
+def fill_datas(ws_in, header_list_in, issues_in, sprint_number_in):
+    issues_line = construct_datas(issues_in, header_list_in, sprint_number_in)
     #add one line +1 for headers:
     for lineidx in range(len(issues_in)):
             if(lineidx == 0):
@@ -78,9 +93,6 @@ def fill_datas(ws_in, header_list_in, issues_in):
                     ws_in.cell(row=lineidx+1, column=linecol+1).value = issues_line[lineidx][linecol]
                     # log("fill rowidx excel={}, colidy excel={}, value={}".format(lineidx+1,linecol+1, issues_line[lineidx][linecol]))
 
-
-def parse_sprints(field_11070):
-    return ', '.join(re.findall(r"name=[^,]+",str(field_11070) )).replace("name=","")
 
 if __name__ == '__main__':
 
@@ -100,6 +112,6 @@ if __name__ == '__main__':
     # Issue type	Issue key	Summary	Custom field (Story Points)	Status	Priority	Sprint	Already started before	Added after started
     header_list = ["Issue type", "Issue key", "Summary", "Custom field (Story Points)", "Status", "Priority", "Sprint", "Already started before", "Added after started"]
     
-    fill_datas(ws1, header_list, issues)
+    fill_datas(ws1, header_list, issues, sp_nb)
     print("Sprint number : {}".format(sp_nb))
     wb.save("c:\\Users\\eguillossou\\jira-report{}.xlsx".format(sp_nb))
