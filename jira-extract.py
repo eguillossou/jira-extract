@@ -53,13 +53,16 @@ def if_already_started(sprints_list_in,sprint_number_in):
     else:
         return(False)
 
+def if_added_after_started():
+    return(False)
+    # else:
+    #     return(False)
+    
 def parse_sprints(field_11070):
     return ', '.join(re.findall(r"name=[^,]+",str(field_11070) )).replace("name=","")
 
-def construct_datas(issues_in, header_list_in, sprint_number_in):
-
-    values_issues = [ fillIT(issue_ids, sprint_number_in) for issue_ids in issues_in ]
-    issues_according_to_header_list = [pad_or_truncate(values_issues[idx],len(header_list_in)) for idx in range(len(values_issues)) ]
+def construct_datas(header_list_in, values_issues_in):
+    issues_according_to_header_list = [pad_or_truncate(values_issues_in[idx],len(header_list_in)) for idx in range(len(values_issues_in)) ]
 
     return issues_according_to_header_list
 
@@ -72,17 +75,14 @@ def fillIT(issue_ids_in, sprint_number_in):
             issue_ids_in.fields.status.name, 
             issue_ids_in.fields.priority.name, 
             sprint_list, 
-            if_already_started(sprint_list, sprint_number_in)]
+            if_already_started(sprint_list, sprint_number_in),
+            if_added_after_started()]
 
 def expression(ws_in, header_list_in, column_nb_in):
     ws_in.cell(row=1, column=column_nb_in+1).value = header_list_in[column_nb_in]
     # log("fill rowidx=1, colidy={}, value={}".format(column_nb_in+1, header_list_in[column_nb_in]))
 
-# def getColumn(lst, col):
-#     return [i[col] for i in lst]
-
-def fill_datas(ws_in, header_list_in, issues_in, sprint_number_in):
-    issues_line = construct_datas(issues_in, header_list_in, sprint_number_in)
+def fill_datas(ws_in, header_list_in, issues_in, sprint_number_in, issues_line_in):
     #add one line +1 for headers:
     for lineidx in range(len(issues_in)):
             if(lineidx == 0):
@@ -90,8 +90,8 @@ def fill_datas(ws_in, header_list_in, issues_in, sprint_number_in):
             else:
                 for linecol in range(len(header_list_in)):
                     #excel cells starting at indexes 1,1
-                    ws_in.cell(row=lineidx+1, column=linecol+1).value = issues_line[lineidx][linecol]
-                    # log("fill rowidx excel={}, colidy excel={}, value={}".format(lineidx+1,linecol+1, issues_line[lineidx][linecol]))
+                    ws_in.cell(row=lineidx+1, column=linecol+1).value = issues_line_in[lineidx][linecol]
+                    # log("fill rowidx excel={}, colidy excel={}, value={}".format(lineidx+1,linecol+1, issues_line_in[lineidx][linecol]))
 
 
 if __name__ == '__main__':
@@ -102,8 +102,8 @@ if __name__ == '__main__':
 
     jira_options={'server': 'https://jira.talendforge.org/','agile_rest_path': 'agile'}
     jira=JIRA(options=jira_options,basic_auth=('eguillossou',os.environ['PASSWORD_JIRA']))
-    sp_nb =  get_selected_sprint_number(arguments().parse_args().sp, jira)
-    issues=jira.search_issues(construct_jql_query(sp_nb,jira), startAt=0, maxResults=500, validate_query=True, fields=None, expand=None, json_result=None)
+    sprint_number =  get_selected_sprint_number(arguments().parse_args().sp, jira)
+    issues=jira.search_issues(construct_jql_query(sprint_number,jira), startAt=0, maxResults=500, validate_query=True, fields=None, expand=None, json_result=None)
 
     wb = Workbook()
     ws1 = wb.create_sheet("Data")
@@ -112,6 +112,9 @@ if __name__ == '__main__':
     # Issue type	Issue key	Summary	Custom field (Story Points)	Status	Priority	Sprint	Already started before	Added after started
     header_list = ["Issue type", "Issue key", "Summary", "Custom field (Story Points)", "Status", "Priority", "Sprint", "Already started before", "Added after started"]
     
-    fill_datas(ws1, header_list, issues, sp_nb)
-    print("Sprint number : {}".format(sp_nb))
-    wb.save("c:\\Users\\eguillossou\\jira-report{}.xlsx".format(sp_nb))
+    values_issues = [ fillIT(issue_ids, sprint_number) for issue_ids in issues ]
+    issues_line = construct_datas(header_list, values_issues)
+
+    fill_datas(ws1, header_list, issues, sprint_number, issues_line)
+    print("Sprint number : {}".format(sprint_number))
+    wb.save("c:\\Users\\eguillossou\\jira-report{}.xlsx".format(sprint_number))
