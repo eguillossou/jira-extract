@@ -10,6 +10,8 @@ import re
 
 #tdc board = 217
 TDC_JIRA_BOARD_ID = 217
+PATH_EXCEL_FILE = "c:\\Users\\eguillossou\\"
+EXCEL_FILE_NAME = "jira-report" 
 
 def log(str):
     print(str)
@@ -40,8 +42,8 @@ def construct_jql_query(sp_nb, handler_jira):
 
     return jql_qry
 
-def fill_header(ws_in, header_list_in):
-    [ expression(ws_in, title, header_list_in.index(title)) for title in header_list_in]
+# def fill_header(ws_in, header_list_in):
+#     [ expression(ws_in, title, header_list_in.index(title)) for title in header_list_in]
 
 def pad_or_truncate(some_list, target_len):
     return some_list[:target_len] + [0]*(target_len - len(some_list))
@@ -78,21 +80,26 @@ def fillIT(issue_ids_in, sprint_number_in):
             if_already_started(sprint_list, sprint_number_in),
             if_added_after_started()]
 
-def expression(ws_in, header_list_in, column_nb_in):
-    ws_in.cell(row=1, column=column_nb_in+1).value = header_list_in[column_nb_in]
+def fill_cell(ws_in, line_in, col_in, value_in):
+    ws_in.cell(row=line_in, column=col_in).value = value_in
+
+def fill_headers(ws_in, header_list_in):
+    [fill_cell(ws_in, 1, idx+1, header_list_in[idx]) for idx in range(len(header_list_in))]
     # log("fill rowidx=1, colidy={}, value={}".format(column_nb_in+1, header_list_in[column_nb_in]))
 
-def fill_datas(ws_in, header_list_in, issues_in, sprint_number_in, issues_line_in):
-    #add one line +1 for headers:
-    for lineidx in range(len(issues_in)):
-            if(lineidx == 0):
-                [(expression(ws_in, header_list_in, idx)) for idx in range(len(header_list_in))]
-            else:
-                for linecol in range(len(header_list_in)):
-                    #excel cells starting at indexes 1,1
-                    ws_in.cell(row=lineidx+1, column=linecol+1).value = issues_line_in[lineidx][linecol]
-                    # log("fill rowidx excel={}, colidy excel={}, value={}".format(lineidx+1,linecol+1, issues_line_in[lineidx][linecol]))
+def fill_values(ws_in, lineidx_in, issues_line_in, header_list_in):
+    [fill_cell(ws_in, lineidx_in+1, linecol+1, issues_line_in[lineidx_in][linecol]) for linecol in range(len(header_list_in))]
 
+
+def fill_headers_and_values(ws_in, header_list_in, lineidx_in, issues_line_in):
+    if(lineidx_in == 0):
+        fill_headers(ws_in, header_list_in)
+    else:
+        fill_values(ws_in, lineidx_in, issues_line_in, header_list_in)
+
+
+def save_excel_file(wb_in, sprint_number_in):
+    wb_in.save("{}{}{}.xlsx".format(PATH_EXCEL_FILE, EXCEL_FILE_NAME, sprint_number))
 
 if __name__ == '__main__':
 
@@ -115,6 +122,7 @@ if __name__ == '__main__':
     values_issues = [ fillIT(issue_ids, sprint_number) for issue_ids in issues ]
     issues_line = construct_datas(header_list, values_issues)
 
-    fill_datas(ws1, header_list, issues, sprint_number, issues_line)
+    [fill_headers_and_values(ws1, header_list, lineidx, issues_line) for lineidx in range(len(issues))]
+
     print("Sprint number : {}".format(sprint_number))
-    wb.save("c:\\Users\\eguillossou\\jira-report{}.xlsx".format(sprint_number))
+    save_excel_file(wb, sprint_number)
