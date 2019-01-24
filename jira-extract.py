@@ -5,8 +5,13 @@ import sys
 from openpyxl import Workbook
 import re
 
+from dateutil.parser import *
+
 # For windows
 # $env:PASSWORD_JIRA='YourPassword'
+# for debug purpose : import pdb;pdb.set_trace()
+# issue_ids_in.fields.__dict__ to have a struct
+#pp issue_ids_in.changelog.histories
 
 #tdc board = 217
 TDC_JIRA_BOARD_ID = 217
@@ -35,15 +40,14 @@ def get_selected_sprint_number(arg_sp, handler_jira):
     if(arg_sp is not None):
         return int(arg_sp)
     else:
-        return re.findall(r"\d+",get_active_sprint(handler_jira))[0]
+        return int(re.findall(r"\d+",get_active_sprint(handler_jira))[0])
+
+def get_sprint_start_date(field_11070):
+    return re.findall(r"startDate=[^,]+",str(field_11070))[0].replace("startDate=","")
 
 def construct_jql_query(sp_nb, handler_jira):
     jql_qry='project = TDC AND issuetype in (Bug, "New Feature", "Work Item") AND Sprint = "TDC Sprint {}" ORDER BY labels ASC, RANK'.format(sp_nb)
-
     return jql_qry
-
-# def fill_header(ws_in, header_list_in):
-#     [ expression(ws_in, title, header_list_in.index(title)) for title in header_list_in]
 
 def pad_or_truncate(some_list, target_len):
     return some_list[:target_len] + [0]*(target_len - len(some_list))
@@ -55,7 +59,23 @@ def if_already_started(sprints_list_in,sprint_number_in):
     else:
         return(False)
 
-def if_added_after_started():
+def if_added_after_started(issue_ids_in, sprint_info_in):
+    starting_sprint_date = "2019-01-15T02:31:56.000-0600"
+    starting_sprint_date = get_sprint_start_date(sprint_info_in)
+    log(starting_sprint_date)
+    
+    # if(starting_sprint_date > inclusion_date_in_sprint):
+
+    log("key:"+issue_ids_in.key)
+    # if(str(issue_ids_in.key) == "TDC-1689"): import pdb;pdb.set_trace()
+    for history in issue_ids_in.changelog.histories:
+        if(history.created is not None and parse(history.created) < parse(starting_sprint_date)):
+            log("{} jira ticket added to current sprint after sprint was started : {}".format(str(issue_ids_in.key), starting_sprint_date))
+            return(False)
+        for item in history.items:
+            if item.field == 'status':
+                print('Date:' + history.created + ' From:' + item.fromString + ' To:' + item.toString)
+
     return(False)
     # else:
     #     return(False)
@@ -69,7 +89,9 @@ def construct_datas(header_list_in, values_issues_in):
     return issues_according_to_header_list
 
 def fillIT(issue_ids_in, sprint_number_in):
-    sprint_list = parse_sprints(issue_ids_in.fields.customfield_11070)
+    sprint_info = issue_ids_in.fields.customfield_11070
+    sprint_list = parse_sprints(sprint_info)
+
     return [issue_ids_in.fields.issuetype.name, 
             issue_ids_in.key, 
             issue_ids_in.fields.summary, 
@@ -78,7 +100,7 @@ def fillIT(issue_ids_in, sprint_number_in):
             issue_ids_in.fields.priority.name, 
             sprint_list, 
             if_already_started(sprint_list, sprint_number_in),
-            if_added_after_started()]
+            if_added_after_started(issue_ids_in, sprint_info)]
 
 def fill_cell(ws_in, line_in, col_in, value_in):
     ws_in.cell(row=line_in, column=col_in).value = value_in
@@ -89,7 +111,6 @@ def fill_headers(ws_in, header_list_in):
 
 def fill_values(ws_in, lineidx_in, issues_line_in, header_list_in):
     [fill_cell(ws_in, lineidx_in+1, linecol+1, issues_line_in[lineidx_in][linecol]) for linecol in range(len(header_list_in))]
-
 
 def fill_headers_and_values(ws_in, header_list_in, lineidx_in, issues_line_in):
     if(lineidx_in == 0):
@@ -110,7 +131,7 @@ if __name__ == '__main__':
     jira_options={'server': 'https://jira.talendforge.org/','agile_rest_path': 'agile'}
     jira=JIRA(options=jira_options,basic_auth=('eguillossou',os.environ['PASSWORD_JIRA']))
     sprint_number =  get_selected_sprint_number(arguments().parse_args().sp, jira)
-    issues=jira.search_issues(construct_jql_query(sprint_number,jira), startAt=0, maxResults=500, validate_query=True, fields=None, expand=None, json_result=None)
+    issues=jira.search_issues(construct_jql_query(sprint_number,jira), startAt=0, maxResults=500, validate_query=True, fields=None, expand="changelog", json_result=None)
 
     wb = Workbook()
     ws1 = wb.create_sheet("Data")
