@@ -105,28 +105,46 @@ def is_issue_by_name_added(item_in_history, name_detail):
 
 def if_added_after_started(issue_ids_in, sprint_details_in, customfield_11070):
     starting_sprint_date = "2019-01-15T02:31:56.000-0600"
-    # if(check_sprint_status() is Active)
+
     starting_sprint_date = sprint_details_in.startDate
-    # get_sprint_start_date(sprint_details_in,customfield_11070)
+
     if(starting_sprint_date == '<null>'):
         return(False)
-    
-    log("key:"+issue_ids_in.key)
-    if(str(issue_ids_in.key) == "TDC-1417"): 
-        last_status = False
-        for history in issue_ids_in.changelog.histories:
-            if(history.created is not None and parse(history.created) < parse(starting_sprint_date)):
-                l=""
-                # log("{} jira ticket added to current sprint after sprint was started : {}".format(str(issue_ids_in.key), starting_sprint_date))
-                # return(False)
-            for item in history.items:
-                # if item.field == 'status':
-                #     print('Date:' + history.created + ' From:' + item.fromString + ' To:' + item.toString)
-                if item.field == "Sprint":
-                    last_status = is_issue_by_name_added(item,sprint_details_in.name)
-                    if(last_status and history.created is not None and parse(history.created) < parse(starting_sprint_date) ):
-                        print("key:{} added".format(issue_ids_in.key))
-            print("history created: "+history.created+" sprint starting date: "+starting_sprint_date+ " last_status: "+str(last_status))
+
+    added = False
+    last_date_item_added = None
+    date_created = None
+    no_sprint_entry_in_history = True
+    selected_sprint_in_first_fromSprint = False
+    for history in issue_ids_in.changelog.histories:
+        date_created = parse(history.created)
+        for item in history.items:
+            if item.field == "Sprint":
+                no_sprint_entry_in_history = False
+                if((item.toString is (None or '') and added) or (item.toString is not None and sprint_details_in.name not in item.toString and added)):
+                    added=False
+                if(item.toString is not None):
+                    if(sprint_details_in.name in item.toString and not added):
+                        added=True
+                        last_date_item_added = parse(history.created)
+                # import pdb;pdb.set_trace()
+                if(selected_sprint_in_first_fromSprint is False and (item.fromString is not (None and '')) and sprint_details_in.name in item.fromString):
+                    print("Case present in first sprint entry")
+                    # added = False
+                    selected_sprint_in_first_fromSprint = True
+
+    # Case when no sprint entry in histories => ticket created with sprint already filled
+    if(no_sprint_entry_in_history and date_created > parse(starting_sprint_date)):
+        print("key: {} created with sprint as parameter, sprint date started: {}".format(issue_ids_in.key, starting_sprint_date))
+        return(True)
+
+    # Case when first sprint entry already contain selected sprint => ticket created with sprint already filled and sprint entry modified after
+
+    if(last_date_item_added is None):
+        return(False)
+    if(added and last_date_item_added > parse(starting_sprint_date)):
+        print("key: {}, date added : {} , sp date started: {}".format(issue_ids_in.key,last_date_item_added, starting_sprint_date))
+        return(True)
 
     return(False)
 
