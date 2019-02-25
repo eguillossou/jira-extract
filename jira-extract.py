@@ -116,6 +116,7 @@ def if_added_after_started(issue_ids_in, sprint_details_in, customfield_11070):
     date_created = None
     no_sprint_entry_in_history = True
     selected_sprint_in_first_fromSprint = False
+    present_in_from_first = False
     for history in issue_ids_in.changelog.histories:
         date_created = parse(history.created)
         for item in history.items:
@@ -127,18 +128,23 @@ def if_added_after_started(issue_ids_in, sprint_details_in, customfield_11070):
                     if(sprint_details_in.name in item.toString and not added):
                         added=True
                         last_date_item_added = parse(history.created)
-                # import pdb;pdb.set_trace()
-                if(selected_sprint_in_first_fromSprint is False and (item.fromString is not (None and '')) and sprint_details_in.name in item.fromString):
-                    print("Case present in first sprint entry")
-                    # added = False
+                if(selected_sprint_in_first_fromSprint is False):
+                    if(item.fromString is not (None and '') and sprint_details_in.name in item.fromString and
+                    (item.toString is not None and sprint_details_in.name in item.toString)):
+                        added = True
+                    if(item.fromString is not (None and '') and sprint_details_in.name in item.fromString and
+                    (item.toString is (None or '')  or item.toString is not None and sprint_details_in.name not in item.toString)):
+                        added=False
                     selected_sprint_in_first_fromSprint = True
-
+                                    # import pdb;pdb.set_trace()
+ 
     # Case when no sprint entry in histories => ticket created with sprint already filled
     if(no_sprint_entry_in_history and date_created > parse(starting_sprint_date)):
         print("key: {} created with sprint as parameter, sprint date started: {}".format(issue_ids_in.key, starting_sprint_date))
         return(True)
 
-    # Case when first sprint entry already contain selected sprint => ticket created with sprint already filled and sprint entry modified after
+    # Case when first sprint entry already contain selected sprint and no other change after that => ticket created with sprint already filled and sprint entry modified after
+
 
     if(last_date_item_added is None):
         return(False)
