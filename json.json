@@ -1,0 +1,1055 @@
+"changes": {
+    "1505820553000": [
+        {
+            "key": "TDC-130",
+            "statC": {},
+            "column": {
+                "notDone": true,
+                "newStatus": "10004"
+            }
+        }
+    ],
+    "1513957919000": [
+        {
+            "key": "TDC-332",
+            "column": {
+                "notDone": true,
+                "newStatus": "10004"
+            }
+        }
+    ],
+    "1513957928000": [
+        {
+            "key": "TDC-333",
+            "column": {
+                "notDone": true,
+                "newStatus": "10004"
+            }
+        }
+    ],
+    "1515585295000": [
+        {
+            "key": "TDC-400",
+            "statC": {},
+            "column": {
+                "notDone": true,
+                "newStatus": "10004"
+            }
+        }
+    ],
+    "1523291079000": [
+        {
+            "key": "TDC-769",
+            "column": {
+                "notDone": true,
+                "newStatus": "10004"
+            }
+        }
+    ],
+    "1523292408000": [
+        {
+            "key": "TDC-771",
+            "column": {
+                "notDone": true,
+                "newStatus": "10004"
+            }
+        }
+    ],
+    "1524133464000": [
+        {
+            "key": "TDC-818",
+            "statC": {},
+            "column": {
+                "notDone": true,
+                "newStatus": "10004"
+            }
+        }
+    ],
+    "1526311997000": [
+        {
+            "key": "TDC-873",
+            "statC": {},
+            "column": {
+                "notDone": true,
+                "newStatus": "10004"
+            }
+        }
+    ],
+    "1526463066000": [
+        {
+            "key": "TDC-887",
+            "column": {
+                "notDone": true,
+                "newStatus": "10004"
+            }
+        }
+    ],
+    "1526463150000": [
+        {
+            "key": "TDC-888",
+            "column": {
+                "notDone": true,
+                "newStatus": "10004"
+            }
+        }
+    ],
+    "1526463164000": [
+        {
+            "key": "TDC-889",
+            "column": {
+                "notDone": true,
+                "newStatus": "10004"
+            }
+        }
+    ],
+    "1526573160000": [
+        {
+            "key": "TDC-887",
+            "statC": {
+                "newValue": 5
+            }
+        }
+    ],
+    "1526573478000": [
+        {
+            "key": "TDC-888",
+            "statC": {
+                "newValue": 3
+            }
+        }
+    ],
+    "1526573623000": [
+        {
+            "key": "TDC-889",
+            "statC": {
+                "newValue": 3
+            }
+        }
+    ],
+    "1529992504000": [
+        {
+            "key": "TDC-1011",
+            "statC": {},
+            "column": {
+                "notDone": true,
+                "newStatus": "10004"
+            }
+        }
+    ],
+    "1532600794000": [
+        {
+            "key": "TDC-333",
+            "statC": {
+                "newValue": 8
+            }
+        }
+    ],
+    "1532602028000": [
+        {
+            "key": "TDC-332",
+            "statC": {
+                "newValue": 3
+            }
+        }
+    ],
+    "1533220646000": [
+        {
+            "key": "TDC-1147",
+            "column": {
+                "notDone": true,
+                "newStatus": "10004"
+            }
+        }
+    ],
+    "1535616817000": [
+        {
+            "key": "TDC-1203",
+            "column": {
+                "notDone": true,
+                "newStatus": "10004"
+            }
+        }
+    ],
+    "1535642052000": [
+        {
+            "key": "TDC-1208",
+            "column": {
+                "notDone": true,
+                "newStatus": "10004"
+            }
+        }
+    ],
+    "1536230150000": [
+        {
+            "key": "TDC-1208",
+            "statC": {
+                "newValue": 1
+            }
+        }
+    ],
+    "1536232783000": [
+        {
+            "key": "TDC-1244",
+            "column": {
+                "notDone": true,
+                "newStatus": "10004"
+            }
+        }
+    ],
+    "1537198178000": [
+        {
+            "key": "TDC-1282",
+            "column": {
+                "notDone": true,
+                "newStatus": "10004"
+            }
+        }
+    ],
+    "1537980772000": [
+        {
+            "key": "TDC-1321",
+            "statC": {},
+            "column": {
+                "notDone": true,
+                "newStatus": "10004"
+            }
+        }
+    ],
+    "1538039481000": [
+        {
+            "key": "TDC-769",
+            "added": true
+        }
+    ],
+    "1538044415000": [
+        {
+            "key": "TDC-771",
+            "added": true
+        }
+    ],
+    "1538061230000": [
+        {
+            "key": "TDC-1323",
+            "statC": {},
+            "column": {
+                "notDone": true,
+                "newStatus": "10004"
+            }
+        }
+    ],
+    "1538061966000": [
+        {
+            "key": "TDC-1324",
+            "statC": {},
+            "column": {
+                "notDone": true,
+                "newStatus": "10004"
+            }
+        }
+    ],
+    "1538145636000": [
+        {
+            "key": "TDC-1326",
+            "statC": {},
+            "column": {
+                "notDone": true,
+                "newStatus": "10004"
+            }
+        }
+    ],
+    "1538562062000": [
+        {
+            "key": "TDC-1330",
+            "column": {
+                "notDone": true,
+                "newStatus": "10004"
+            }
+        }
+    ],
+    "1538649745000": [
+        {
+            "key": "TDC-1203",
+            "statC": {
+                "newValue": 5
+            }
+        }
+    ],
+    "1538661336000": [
+        {
+            "key": "TDC-1335",
+            "statC": {},
+            "column": {
+                "notDone": true,
+                "newStatus": "10004"
+            }
+        }
+    ],
+    "1538753858000": [
+        {
+            "key": "TDC-1244",
+            "added": true
+        }
+    ],
+    "1539597315000": [
+        {
+            "key": "TDC-1147",
+            "statC": {
+                "newValue": 5
+            }
+        }
+    ],
+    "1539602905000": [
+        {
+            "key": "TDC-1354",
+            "column": {
+                "notDone": true,
+                "newStatus": "10004"
+            }
+        }
+    ],
+    "1539676923000": [
+        {
+            "key": "TDC-1330",
+            "added": true
+        }
+    ],
+    "1539849058000": [
+        {
+            "key": "TDC-333",
+            "added": true
+        }
+    ],
+    "1539946393000": [
+        {
+            "key": "TDC-1373",
+            "column": {
+                "notDone": true,
+                "newStatus": "10004"
+            }
+        }
+    ],
+    "1539946431000": [
+        {
+            "key": "TDC-1374",
+            "column": {
+                "notDone": true,
+                "newStatus": "10004"
+            }
+        }
+    ],
+    "1539946447000": [
+        {
+            "key": "TDC-1375",
+            "column": {
+                "notDone": true,
+                "newStatus": "10004"
+            }
+        }
+    ],
+    "1539962177000": [
+        {
+            "key": "TDC-1335",
+            "added": true
+        }
+    ],
+    "1540208813000": [
+        {
+            "key": "TDC-1383",
+            "statC": {},
+            "column": {
+                "notDone": true,
+                "newStatus": "10004"
+            }
+        }
+    ],
+    "1540458429000": [
+        {
+            "key": "TDC-1389",
+            "statC": {},
+            "column": {
+                "notDone": true,
+                "newStatus": "10004"
+            }
+        }
+    ],
+    "1540465375000": [
+        {
+            "key": "TDC-1373",
+            "statC": {
+                "newValue": 3
+            }
+        }
+    ],
+    "1540553474000": [
+        {
+            "key": "TDC-1400",
+            "column": {
+                "notDone": true,
+                "newStatus": "1"
+            }
+        }
+    ],
+    "1540563265000": [
+        {
+            "key": "TDC-1244",
+            "statC": {
+                "newValue": 1
+            }
+        }
+    ],
+    "1540564399000": [
+        {
+            "key": "TDC-769",
+            "statC": {
+                "newValue": 2
+            }
+        }
+    ],
+    "1540564744000": [
+        {
+            "key": "TDC-1330",
+            "statC": {
+                "newValue": 2
+            }
+        }
+    ],
+    "1540565039000": [
+        {
+            "key": "TDC-771",
+            "statC": {
+                "newValue": 1
+            }
+        }
+    ],
+    "1540814196000": [
+        {
+            "key": "TDC-1405",
+            "statC": {},
+            "added": true,
+            "column": {
+                "notDone": true,
+                "newStatus": "10004"
+            }
+        }
+    ],
+    "1540822672000": [
+        {
+            "key": "TDC-1374",
+            "statC": {
+                "newValue": 2
+            }
+        }
+    ],
+    "1540822738000": [
+        {
+            "key": "TDC-1375",
+            "statC": {
+                "newValue": 2
+            }
+        }
+    ],
+    "1540894947000": [
+        {
+            "key": "TDC-1373",
+            "added": true
+        },
+        {
+            "key": "TDC-1374",
+            "added": true
+        },
+        {
+            "key": "TDC-1375",
+            "added": true
+        }
+    ],
+    "1540900274000": [
+        {
+            "key": "TDC-1417",
+            "statC": {},
+            "column": {
+                "notDone": true,
+                "newStatus": "10004"
+            }
+        }
+    ],
+    "1540911190000": [
+        {
+            "key": "TDC-332",
+            "added": true
+        }
+    ],
+    "1541406696000": [
+        {
+            "key": "TDC-1282",
+            "added": true
+        },
+        {
+            "key": "TDC-818",
+            "added": true
+        }
+    ],
+    "1541406697000": [
+        {
+            "key": "TDC-873",
+            "added": true
+        },
+        {
+            "key": "TDC-400",
+            "added": true
+        }
+    ],
+    "1541406698000": [
+        {
+            "key": "TDC-1321",
+            "added": true
+        }
+    ],
+    "1541406699000": [
+        {
+            "key": "TDC-1011",
+            "added": true
+        },
+        {
+            "key": "TDC-1203",
+            "added": true
+        }
+    ],
+    "1541406700000": [
+        {
+            "key": "TDC-888",
+            "added": true
+        },
+        {
+            "key": "TDC-889",
+            "added": true
+        },
+        {
+            "key": "TDC-887",
+            "added": true
+        },
+        {
+            "key": "TDC-1147",
+            "added": true
+        }
+    ],
+    "1541406701000": [
+        {
+            "key": "TDC-1354",
+            "added": true
+        },
+        {
+            "key": "TDC-130",
+            "added": true
+        },
+        {
+            "key": "TDC-1208",
+            "added": true
+        }
+    ],
+    "1541406702000": [
+        {
+            "key": "TDC-1326",
+            "added": true
+        }
+    ],
+    "1541406703000": [
+        {
+            "key": "TDC-1323",
+            "added": true
+        },
+        {
+            "key": "TDC-1389",
+            "added": true
+        },
+        {
+            "key": "TDC-1400",
+            "added": true
+        },
+        {
+            "key": "TDC-1324",
+            "added": true
+        }
+    ],
+    "1541431331000": [
+        {
+            "key": "TDC-1400",
+            "statC": {}
+        }
+    ],
+    "1541432054000": [
+        {
+            "key": "TDC-1282",
+            "statC": {
+                "newValue": 1
+            }
+        }
+    ],
+    "1541432399000": [
+        {
+            "key": "TDC-1354",
+            "statC": {
+                "newValue": 3
+            }
+        }
+    ],
+    "1541514739000": [
+        {
+            "key": "TDC-1417",
+            "added": true
+        }
+    ],
+    "1541526020000": [
+        {
+            "key": "TDC-1441",
+            "statC": {},
+            "column": {
+                "notDone": true,
+                "newStatus": "10004"
+            }
+        }
+    ],
+    "1541526213000": [
+        {
+            "key": "TDC-1441",
+            "added": true
+        }
+    ],
+    "1541526285000": [
+        {
+            "key": "TDC-1442",
+            "statC": {},
+            "added": true,
+            "column": {
+                "notDone": true,
+                "newStatus": "10004"
+            }
+        }
+    ],
+    "1541591499000": [
+        {
+            "key": "TDC-771",
+            "column": {
+                "notDone": false,
+                "done": true,
+                "newStatus": "10010"
+            }
+        }
+    ],
+    "1541594385000": [
+        {
+            "key": "TDC-771",
+            "column": {
+                "notDone": true,
+                "done": false,
+                "newStatus": "3"
+            }
+        }
+    ],
+    "1541674043000": [
+        {
+            "key": "TDC-1459",
+            "statC": {},
+            "added": true,
+            "column": {
+                "notDone": true,
+                "newStatus": "10004"
+            }
+        }
+    ],
+    "1541674417000": [
+        {
+            "key": "TDC-1460",
+            "statC": {},
+            "added": true,
+            "column": {
+                "notDone": true,
+                "newStatus": "10004"
+            }
+        }
+    ],
+    "1541777151000": [
+        {
+            "key": "TDC-1321",
+            "column": {
+                "notDone": false,
+                "done": true,
+                "newStatus": "10020"
+            }
+        }
+    ],
+    "1541777951000": [
+        {
+            "key": "TDC-1383",
+            "added": true
+        }
+    ],
+    "1541781221000": [
+        {
+            "key": "TDC-1282",
+            "column": {
+                "notDone": false,
+                "done": true,
+                "newStatus": "10010"
+            }
+        }
+    ],
+    "1542015223000": [
+        {
+            "key": "TDC-1468",
+            "statC": {},
+            "added": true,
+            "column": {
+                "notDone": true,
+                "newStatus": "10004"
+            }
+        }
+    ],
+    "1542015406000": [
+        {
+            "key": "TDC-1469",
+            "statC": {},
+            "column": {
+                "notDone": true,
+                "newStatus": "10004"
+            }
+        }
+    ],
+    "1542015437000": [
+        {
+            "key": "TDC-1469",
+            "added": true
+        }
+    ],
+    "1542016417000": [
+        {
+            "key": "TDC-1460",
+            "column": {
+                "notDone": false,
+                "done": true,
+                "newStatus": "10010"
+            }
+        }
+    ],
+    "1542044377000": [
+        {
+            "key": "TDC-1324",
+            "column": {
+                "notDone": false,
+                "done": true,
+                "newStatus": "10010"
+            }
+        }
+    ],
+    "1542044468000": [
+        {
+            "key": "TDC-1323",
+            "column": {
+                "notDone": false,
+                "done": true,
+                "newStatus": "10010"
+            }
+        }
+    ],
+    "1542109468000": [
+        {
+            "key": "TDC-769",
+            "column": {
+                "notDone": false,
+                "done": true,
+                "newStatus": "10010"
+            }
+        }
+    ],
+    "1542120033000": [
+        {
+            "key": "TDC-1011",
+            "column": {
+                "notDone": false,
+                "done": true,
+                "newStatus": "10010"
+            }
+        }
+    ],
+    "1542190175000": [
+        {
+            "key": "TDC-1208",
+            "column": {
+                "notDone": false,
+                "done": true,
+                "newStatus": "10020"
+            }
+        }
+    ],
+    "1542191283000": [
+        {
+            "key": "TDC-1208",
+            "column": {
+                "notDone": true,
+                "done": false,
+                "newStatus": "10004"
+            }
+        }
+    ],
+    "1542192500000": [
+        {
+            "key": "TDC-771",
+            "column": {
+                "notDone": false,
+                "done": true,
+                "newStatus": "10010"
+            }
+        }
+    ],
+    "1542192515000": [
+        {
+            "key": "TDC-1479",
+            "statC": {},
+            "column": {
+                "notDone": true,
+                "newStatus": "10004"
+            }
+        }
+    ],
+    "1542206170000": [
+        {
+            "key": "TDC-1479",
+            "added": true
+        }
+    ],
+    "1542706821000": [
+        {
+            "key": "TDC-1354",
+            "column": {
+                "notDone": false,
+                "done": true,
+                "newStatus": "10010"
+            }
+        }
+    ],
+    "1542707539000": [
+        {
+            "key": "TDC-1354",
+            "column": {
+                "notDone": true,
+                "done": false,
+                "newStatus": "3"
+            }
+        }
+    ],
+    "1542722248000": [
+        {
+            "key": "TDC-1354",
+            "column": {
+                "notDone": false,
+                "done": true,
+                "newStatus": "10010"
+            }
+        }
+    ],
+    "1542810607000": [
+        {
+            "key": "TDC-1468",
+            "column": {
+                "notDone": false,
+                "done": true,
+                "newStatus": "10010"
+            }
+        }
+    ],
+    "1542810630000": [
+        {
+            "key": "TDC-1330",
+            "column": {
+                "notDone": false,
+                "done": true,
+                "newStatus": "10010"
+            }
+        }
+    ],
+    "1542810643000": [
+        {
+            "key": "TDC-1479",
+            "column": {
+                "notDone": false,
+                "done": true,
+                "newStatus": "10010"
+            }
+        }
+    ],
+    "1542810856000": [
+        {
+            "key": "TDC-1479",
+            "column": {
+                "notDone": true,
+                "done": false,
+                "newStatus": "3"
+            }
+        }
+    ],
+    "1542810880000": [
+        {
+            "key": "TDC-1479",
+            "column": {
+                "notDone": false,
+                "done": true,
+                "newStatus": "10010"
+            }
+        }
+    ],
+    "1542811119000": [
+        {
+            "key": "TDC-1208",
+            "column": {
+                "notDone": false,
+                "done": true,
+                "newStatus": "10010"
+            }
+        }
+    ],
+    "1542818144000": [
+        {
+            "key": "TDC-1321",
+            "column": {
+                "notDone": true,
+                "done": false,
+                "newStatus": "10004"
+            }
+        }
+    ],
+    "1542825074000": [
+        {
+            "key": "TDC-1326",
+            "column": {
+                "notDone": false,
+                "done": true,
+                "newStatus": "10010"
+            }
+        }
+    ],
+    "1542825099000": [
+        {
+            "key": "TDC-1441",
+            "column": {
+                "notDone": false,
+                "done": true,
+                "newStatus": "10010"
+            }
+        }
+    ],
+    "1542825220000": [
+        {
+            "key": "TDC-1442",
+            "column": {
+                "notDone": false,
+                "done": true,
+                "newStatus": "10010"
+            }
+        }
+    ],
+    "1542877223000": [
+        {
+            "key": "TDC-1147",
+            "column": {
+                "notDone": false,
+                "done": true,
+                "newStatus": "10010"
+            }
+        }
+    ],
+    "1542877713000": [
+        {
+            "key": "TDC-1244",
+            "column": {
+                "notDone": false,
+                "done": true,
+                "newStatus": "10010"
+            }
+        }
+    ],
+    "1542880000000": [
+        {
+            "key": "TDC-333",
+            "column": {
+                "notDone": false,
+                "done": true,
+                "newStatus": "10010"
+            }
+        }
+    ],
+    "1542880013000": [
+        {
+            "key": "TDC-332",
+            "column": {
+                "notDone": false,
+                "done": true,
+                "newStatus": "10010"
+            }
+        }
+    ],
+    "1542882139000": [
+        {
+            "key": "TDC-1389",
+            "column": {
+                "notDone": false,
+                "done": true,
+                "newStatus": "10010"
+            }
+        }
+    ],
+    "1542885500000": [
+        {
+            "key": "TDC-818",
+            "column": {
+                "notDone": false,
+                "done": true,
+                "newStatus": "10010"
+            }
+        }
+    ],
+    "1542987062000": [
+        {
+            "key": "TDC-1335",
+            "added": false
+        }
+    ],
+    "1543243774000": [
+        {
+            "key": "TDC-873",
+            "column": {
+                "notDone": false,
+                "done": true,
+                "newStatus": "10010"
+            }
+        }
+    ],
+    "1543308338000": [
+        {
+            "key": "TDC-887",
+            "column": {
+                "notDone": false,
+                "done": true,
+                "newStatus": "10010"
+            }
+        }
+    ],
+    "1543308401000": [
+        {
+            "key": "TDC-888",
+            "column": {
+                "notDone": false,
+                "done": true,
+                "newStatus": "10010"
+            }
+        }
+    ],
+    "1543308420000": [
+        {
+            "key": "TDC-889",
+            "column": {
+                "notDone": false,
+                "done": true,
+                "newStatus": "10010"
+            }
+        }
+    ]
+},

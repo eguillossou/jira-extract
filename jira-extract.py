@@ -4,6 +4,7 @@ import os
 import sys
 from openpyxl import Workbook
 import re
+import requests
 
 from dateutil.parser import parse
 
@@ -18,6 +19,9 @@ from dateutil.parser import parse
 TDC_JIRA_BOARD_ID = 217
 PATH_EXCEL_FILE = "c:\\Users\\eguillossou\\"
 EXCEL_FILE_NAME = "jira-report"
+JIRA_URL = "https://jira.talendforge.org/"
+USER_LOGIN = 'eguillossou'
+USER_PASSWORD = os.environ['PASSWORD_JIRA']
 
 def log(str):
     print(str)
@@ -103,56 +107,14 @@ def is_issue_by_name_added(item_in_history, name_detail):
 
     return(False)
 
-def if_added_after_started(issue_ids_in, sprint_details_in, customfield_11070):
-    starting_sprint_date = "2019-01-15T02:31:56.000-0600"
+def if_added_after_started(issue_ids_in, issuelist_added_to_sprint_in):
+    return issue_ids_in.key in issuelist_added_to_sprint_in.keys()
 
-    starting_sprint_date = sprint_details_in.startDate
-
-    if(starting_sprint_date == '<null>'):
-        return(False)
-
-    added = False
-    last_date_item_added = None
-    date_created = None
-    no_sprint_entry_in_history = True
-    selected_sprint_in_first_fromSprint = False
-    present_in_from_first = False
-    for history in issue_ids_in.changelog.histories:
-        date_created = parse(history.created)
-        for item in history.items:
-            if item.field == "Sprint":
-                no_sprint_entry_in_history = False
-                if((item.toString is (None or '') and added) or (item.toString is not None and sprint_details_in.name not in item.toString and added)):
-                    added=False
-                if(item.toString is not None):
-                    if(sprint_details_in.name in item.toString and not added):
-                        added=True
-                        last_date_item_added = parse(history.created)
-                if(selected_sprint_in_first_fromSprint is False):
-                    if(item.fromString is not (None and '') and sprint_details_in.name in item.fromString and
-                    (item.toString is not None and sprint_details_in.name in item.toString)):
-                        added = True
-                    if(item.fromString is not (None and '') and sprint_details_in.name in item.fromString and
-                    (item.toString is (None or '')  or item.toString is not None and sprint_details_in.name not in item.toString)):
-                        added=False
-                    selected_sprint_in_first_fromSprint = True
-                                    # import pdb;pdb.set_trace()
- 
-    # Case when no sprint entry in histories => ticket created with sprint already filled
-    if(no_sprint_entry_in_history and date_created > parse(starting_sprint_date)):
-        print("key: {} created with sprint as parameter, sprint date started: {}".format(issue_ids_in.key, starting_sprint_date))
-        return(True)
-
-    # Case when first sprint entry already contain selected sprint and no other change after that => ticket created with sprint already filled and sprint entry modified after
-
-
-    if(last_date_item_added is None):
-        return(False)
-    if(added and last_date_item_added > parse(starting_sprint_date)):
-        print("key: {}, date added : {} , sp date started: {}".format(issue_ids_in.key,last_date_item_added, starting_sprint_date))
-        return(True)
-
-    return(False)
+def get_reports_from_jira(jira_talend_in, sprint_id_in, user_in, password_in):
+    url = '{}rest/greenhopper/1.0/rapid/charts/sprintreport?rapidViewId=217&sprintId={}'.format(jira_talend_in, sprint_id_in)
+    headers = {'content-type': 'application/json'}
+    r = requests.get(url, headers, auth=(user_in,password_in))
+    return(r.json()['contents']['issueKeysAddedDuringSprint'])
 
 def parse_sprints(field_11070):
     return ', '.join(re.findall(r"name=[^,]+",str(field_11070) )).replace("name=","")
@@ -162,7 +124,7 @@ def construct_datas(header_list_in, values_issues_in):
 
     return issues_according_to_header_list
 
-def fillIT(issue_ids_in, sprint_details_in, sprint_number_in):
+def fillIT(issue_ids_in, sprint_details_in, sprint_number_in, issuelist_added_to_sprint_in):
     customfield_11070 = issue_ids_in.fields.customfield_11070
     sprint_list = parse_sprints(customfield_11070)
 
@@ -174,7 +136,7 @@ def fillIT(issue_ids_in, sprint_details_in, sprint_number_in):
             issue_ids_in.fields.priority.name, 
             sprint_list, 
             if_already_started(sprint_list, sprint_number_in),
-            if_added_after_started(issue_ids_in, sprint_details_in, customfield_11070)]
+            if_added_after_started(issue_ids_in, issuelist_added_to_sprint_in)]
 
 def fill_cell(ws_in, line_in, col_in, value_in):
     ws_in.cell(row=line_in, column=col_in).value = value_in
@@ -202,13 +164,15 @@ if __name__ == '__main__':
         log("Missing environment variable PASSWORD_JIRA.")
         sys.exit(1)
 
-    jira_options={'server': 'https://jira.talendforge.org/','agile_rest_path': 'agile'}
-    jira=JIRA(options=jira_options,basic_auth=('eguillossou',os.environ['PASSWORD_JIRA']))
+    jira_options={'server': JIRA_URL ,'agile_rest_path': 'agile'}
+    jira=JIRA(options=jira_options,basic_auth=(USER_LOGIN , USER_PASSWORD))
 
     sprint_list=get_sprints_list(jira)
     sprint_details=get_sprint_details(jira, arguments().parse_args().sp, sprint_list)
     sprint_number=get_selected_sprint_number(sprint_details)
     
+    issuelist_added_to_sprint = get_reports_from_jira(JIRA_URL, sprint_details.id, USER_LOGIN , USER_PASSWORD)
+
     issues=jira.search_issues(construct_jql_query(sprint_number,jira), startAt=0, maxResults=500, validate_query=True, fields=None, expand="changelog", json_result=None)
 
     wb = Workbook()
@@ -219,7 +183,7 @@ if __name__ == '__main__':
     # Issue type	Issue key	Summary	Custom field (Story Points)	Status	Priority	Sprint	Already started before	Added after started
     header_list = ["Issue type", "Issue key", "Summary", "Custom field (Story Points)", "Status", "Priority", "Sprint", "Already started before", "Added after started"]
     
-    values_issues = [ fillIT(issue_ids, sprint_details, sprint_number) for issue_ids in issues ]
+    values_issues = [ fillIT(issue_ids, sprint_details, sprint_number, issuelist_added_to_sprint) for issue_ids in issues ]
     issues_line = construct_datas(header_list, values_issues)
 
     [fill_headers_and_values(ws, header_list, lineidx, issues_line) for lineidx in range(len(issues))]
