@@ -78,35 +78,6 @@ def if_already_started(sprints_list_in,sprint_number_in):
     else:
         return(False)
 
-def is_issue_by_name_added(item_in_history, name_detail):
-    # fromString for field "sprint" in payload is empty and toString is empty
-    if(item_in_history.fromString is None and item_in_history.toString is None):
-        return(False)
-
-    # fromString is empty and toString is not empty
-    # if "TDC Sprint X" is present within toString field, issue has been added to sprint
-    if(item_in_history.fromString is None and item_in_history.toString is not None):
-        if(name_detail not in item_in_history.toString):
-            return(False)
-        else:
-            return(True)
-
-    # fromString is not empty and toString is empty
-    # if "TDC Sprint X" is present within fromString field but not in toString, issue has been removed from sprint
-    if(item_in_history.fromString is not None and item_in_history.toString is None):
-        return(False)
-
-    # fromString is not empty and toString is not empty at this step
-    # if "TDC Sprint X" is present within fromString field but not in toString, issue has been removed from sprint
-    if(name_detail in item_in_history.fromString and name_detail not in item_in_history.toString):
-        return(False)
-
-    # if "TDC Sprint X" present in toString, issue is new or still present in sprint
-    if(name_detail in item_in_history.toString):
-        return(True)    
-
-    return(False)
-
 def if_added_after_started(issue_ids_in, issuelist_added_to_sprint_in):
     return issue_ids_in.key in issuelist_added_to_sprint_in.keys()
 
@@ -129,14 +100,15 @@ def fillIT(issue_ids_in, sprint_details_in, sprint_number_in, issuelist_added_to
     sprint_list = parse_sprints(customfield_11070)
 
     return [issue_ids_in.fields.issuetype.name, 
-            issue_ids_in.key, 
-            issue_ids_in.fields.summary, 
-            issue_ids_in.fields.customfield_10150, 
-            issue_ids_in.fields.status.name, 
-            issue_ids_in.fields.priority.name, 
+            issue_ids_in.key,
+            issue_ids_in.fields.summary,
+            issue_ids_in.fields.customfield_10150,
+            issue_ids_in.fields.status.name,
+            issue_ids_in.fields.priority.name,
             sprint_list, 
             if_already_started(sprint_list, sprint_number_in),
-            if_added_after_started(issue_ids_in, issuelist_added_to_sprint_in)]
+            if_added_after_started(issue_ids_in, issuelist_added_to_sprint_in),
+            ', '.join(issue_ids_in.fields.labels)]
 
 def fill_cell(ws_in, line_in, col_in, value_in):
     ws_in.cell(row=line_in, column=col_in).value = value_in
@@ -156,7 +128,9 @@ def fill_headers_and_values(ws_in, header_list_in, lineidx_in, issues_line_in):
 
 
 def save_excel_file(wb_in, sprint_number_in):
-    wb_in.save("{}{}{}.xlsx".format(PATH_EXCEL_FILE, EXCEL_FILE_NAME, sprint_number))
+    my_file = "{}{}{}.xlsx".format(PATH_EXCEL_FILE, EXCEL_FILE_NAME, sprint_number_in)
+    log("Saving file to : "+my_file)
+    wb_in.save(my_file)
 
 if __name__ == '__main__':
 
@@ -181,7 +155,7 @@ if __name__ == '__main__':
 
     #Column to fill
     # Issue type	Issue key	Summary	Custom field (Story Points)	Status	Priority	Sprint	Already started before	Added after started
-    header_list = ["Issue type", "Issue key", "Summary", "Custom field (Story Points)", "Status", "Priority", "Sprint", "Already started before", "Added after started"]
+    header_list = ["Issue type", "Issue key", "Summary", "Custom field (Story Points)", "Status", "Priority", "Sprint", "Already started before", "Added after started", "Labels"]
     
     values_issues = [ fillIT(issue_ids, sprint_details, sprint_number, issuelist_added_to_sprint) for issue_ids in issues ]
     issues_line = construct_datas(header_list, values_issues)
