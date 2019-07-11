@@ -108,7 +108,8 @@ def fillIT(issue_ids_in, sprint_details_in, sprint_number_in, issuelist_added_to
             sprint_list, 
             if_already_started(sprint_list, sprint_number_in),
             if_added_after_started(issue_ids_in, issuelist_added_to_sprint_in),
-            ', '.join(issue_ids_in.fields.labels)]
+            ', '.join(issue_ids_in.fields.labels),
+            issue_ids_in.fields.customfield_11071]
 
 def fill_cell(ws_in, line_in, col_in, value_in):
     ws_in.cell(row=line_in, column=col_in).value = value_in
@@ -155,7 +156,7 @@ if __name__ == '__main__':
 
     #Column to fill
     # Issue type	Issue key	Summary	Custom field (Story Points)	Status	Priority	Sprint	Already started before	Added after started
-    header_list = ["Issue type", "Issue key", "Summary", "Custom field (Story Points)", "Status", "Priority", "Sprint", "Already started before", "Added after started", "Labels"]
+    header_list = ["Issue type", "Issue key", "Summary", "Custom field (Story Points)", "Status", "Priority", "Sprint", "Already started before", "Added after started", "Labels", "Epic Link"]
     
     values_issues = [ fillIT(issue_ids, sprint_details, sprint_number, issuelist_added_to_sprint) for issue_ids in issues ]
     issues_line = construct_datas(header_list, values_issues)
