@@ -22,6 +22,7 @@ EXCEL_FILE_NAME = "jira-report"
 JIRA_URL = "https://jira.talendforge.org/"
 USER_LOGIN = 'eguillossou'
 USER_PASSWORD = os.environ['PASSWORD_JIRA']
+TDC_JIRA_SPRINT_PAGINATION = 30
 
 def log(str):
     print(str)
@@ -44,7 +45,7 @@ def get_selected_sprint_number(sprint_details_in):
     return int(re.search(r"\d+",str(sprint_details_in)).group())
 
 def get_sprints_list(handler_jira):
-    return(handler_jira.sprints(TDC_JIRA_BOARD_ID,extended=True, startAt=0))
+    return(handler_jira.sprints(TDC_JIRA_BOARD_ID,extended=True, startAt=TDC_JIRA_SPRINT_PAGINATION))
 
 def get_selected_sprint(sp_nb_in, sprints_list_in):
     return(sprints_list_in[sp_nb_in])
@@ -113,10 +114,10 @@ def fillIT(issue_ids_in, sprint_details_in, sprint_number_in, issuelist_added_to
 
 def fill_cell(ws_in, line_in, col_in, value_in):
     ws_in.cell(row=line_in, column=col_in).value = value_in
+    # log("fill rowidx=1, colidy={}, value={}".format(col_in, value_in))
 
 def fill_headers(ws_in, header_list_in):
     [fill_cell(ws_in, 1, idx+1, header_list_in[idx]) for idx in range(len(header_list_in))]
-    # log("fill rowidx=1, colidy={}, value={}".format(column_nb_in+1, header_list_in[column_nb_in]))
 
 def fill_values(ws_in, lineidx_in, issues_line_in, header_list_in):
     [fill_cell(ws_in, lineidx_in+1, linecol+1, issues_line_in[lineidx_in][linecol]) for linecol in range(len(header_list_in))]
