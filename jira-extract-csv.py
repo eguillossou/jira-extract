@@ -6,7 +6,7 @@ from openpyxl import Workbook
 import re
 import requests
 import json
-from datetime import datetime
+from datetime import datetime,timedelta
 
 from dateutil.parser import parse
 
@@ -235,16 +235,47 @@ if __name__ == '__main__':
                 }
             return switcher.get(transition,'unknown transition:'+transition)
 
-    # headers = ["Issue key","Creation Date","Moved to Accepted","Moved to In Progress","Moved to Code Review","Moved to Validation","Moved to Merge","Moved to Final Check","Moved to Done"]
-    # headers = {"Issue key": {"Creation Date" : None,"Moved to Accepted": None,"Moved to In Progress": None,"Moved to Code Review": None,"Moved to Validation": None,"Moved to Merge": None,"Moved to Final Check": None,"Moved to Done": None}}
-    headers_1 = ["Issue key","Issue Type","old state","new state","Date of update"]
-    state_list = [""]
+    # def init_datadict(key):
+    #     struct[key] = {}
+    #     struct[key]={
+    #                     STR_TYPE:"",
+    #                     STR_CREATIONDATE:"",
+    #                     STR_RESODATE:"",
+    #                     STR_NEWDATE:"",
+    #                     STR_CANDIDATEDATE:"",
+    #                     STR_ACCEPTDATE:"",
+    #                     STR_PROGRESSDATE:"",
+    #                     STR_REVIEWDATE:"",
+    #                     STR_VALIDDATE:"",
+    #                     STR_MERGEDATE:"",
+    #                     STR_FINALCDATE:"",
+    #                     STR_DONEDATE:"",
+    #                     STR_CLOSEDDATE:"",
+    #                     STR_ONHOLDDATE:"",
+    #                     STR_BLOCKEDDATE:"",
+    #                     STR_NEWTIME:"",
+    #                     STR_CANDIDATETIME:"",
+    #                     STR_ACCEPTTIME:"",
+    #                     STR_PROGRESSTIME:"",
+    #                     STR_REVIEWTIME:"",
+    #                     STR_VALIDTIME:"",
+    #                     STR_MERGETIME:"",
+    #                     STR_FINALCTIME:"",
+    #                     STR_DONETIME:"",
+    #                     STR_CLOSEDTIME:"",
+    #                     STR_ONHOLDTIME:"",
+    #                     STR_BLOCKEDTIME:"",
+    #                     STR_LEADTIME:
+    #                     }
+    #     return(struct)
 
-    # dataset={{}}
+    headers = ["Issue key","Creation Date","Moved to Accepted","Moved to In Progress","Moved to Code Review","Moved to Validation","Moved to Merge","Moved to Final Check","Moved to Done"]
+    # headers = {"Issue key": {"Creation Date" : None,"Moved to Accepted": None,"Moved to In Progress": None,"Moved to Code Review": None,"Moved to Validation": None,"Moved to Merge": None,"Moved to Final Check": None,"Moved to Done": None}}
+    # headers_1 = ["Issue key","Issue Type","old state","new state","Date of update"]
     dataset=[]
     dataset.append(headers)
-    newkey=False
-    status_update=[]
+    status_update={}
+    datadict = {STR_KEY: {} }
     datadict[STR_KEY]={
                         STR_TYPE:STR_TYPE,
                         STR_CREATIONDATE:STR_CREATIONDATE,
@@ -273,13 +304,14 @@ if __name__ == '__main__':
                         STR_CLOSEDTIME:STR_CLOSEDTIME,
                         STR_ONHOLDTIME:STR_ONHOLDTIME,
                         STR_BLOCKEDTIME:STR_BLOCKEDTIME,
-                        STR_LEADTIME:STR_LEADTIME,
+                        STR_LEADTIME:STR_LEADTIME
                         }
 
     for issue in issuesn:
         if hasattr(issue, 'key'):
             key=issue.key
-            print("key: {}".format(key))
+            # print("key: {}".format(key))
+            datadict[key] = {}
         else:
             key="empty"
         # Get datetime creation
@@ -290,51 +322,105 @@ if __name__ == '__main__':
             datadict[key][STR_CREATIONDATE] = datetime_creation
 
         # Get datetime resolution
-        # datetime_resolution = issue.fields.resolutiondate
-        # if datetime_resolution is not None:
-        #         # Interested in only seconds precision, so slice unnecessary part
-        #     datetime_resolution = datetime.strptime(datetime_resolution[:19], "%Y-%m-%dT%H:%M:%S")
+        datetime_resolution = issue.fields.resolutiondate
+        if datetime_resolution is not None:
+                # Interested in only seconds precision, so slice unnecessary part
+            datetime_resolution = datetime.strptime(datetime_resolution[:19], "%Y-%m-%dT%H:%M:%S")
+            datadict[key][STR_RESODATE] = datetime_resolution
+        
+        datadict[key][STR_TYPE] = issue.fields.issuetype.name
 
         previous_status_change_date = datetime_creation
 
         for history in issue.changelog.histories:
             for item in history.items:
                 if hasattr(item, 'field') and item.field == "status":
-                    print("status fromString:{}, toString:{}".format(item.fromString,item.toString))
+                    # print("status fromString:{}, toString:{}".format(item.fromString,item.toString))
                     if hasattr(history, 'created'):
                         date=datetime.strptime(history.created[:19], "%Y-%m-%dT%H:%M:%S")
+                    if item.fromString not in status_update:
+                        status_update[item.fromString] = timedelta(0)   
+                    if item.toString not in status_update:
+                        status_update[item.toString] = timedelta(0)
 
-                    print(date-previous_status_change_date)
-                    if datetime_creation is not None:
-                        # Interested in only seconds precision, so slice unnecessary part
-                        dataset.append([key,issue.fields.issuetype.name if hasattr(issue.fields.issuetype,'name') else "None","Create","New",datetime_creation])
-                        datetime_creation = None
+                    # print(date-previous_status_change_date)
 
                     datadict[key][switch_date(item.toString)] = date
-                    dataset.append([key,issue.fields.issuetype.name if hasattr(issue.fields.issuetype,'name') else "None",item.fromString,item.toString,date])
+                    # dataset.append([key,issue.fields.issuetype.name if hasattr(issue.fields.issuetype,'name') else "None",item.fromString,item.toString,date])
+                    # status_update[item.fromString] += round((date-previous_status_change_date)/3600000 *10) / 10
                     status_update[item.fromString] += date-previous_status_change_date
-
-
+                    datadict[key][switch_time(item.toString)] = status_update[item.fromString]
                     previous_status_change_date = date
-
-                    # if item.field == 'Link':
-                    # print("{} was linked to {} at {}".format(item.toString.split()[-1], issue, history.created))
-        # if datetime_resolution is not None and item.toString != "Rejected":
-        #         # Interested in only seconds precision, so slice unnecessary part
-        #     dataset.append([key,"Done","Closed",datetime_resolution])
-        #     datetime_resolution = None
 
     wb = Workbook()
     ws = wb.active
     ws.title ="JIRAIssueTransitions"
+    def _get_column_letter(col_idx):
+        """Convert a column number into a column letter (3 -> 'C')
+
+        Right shift the column col_idx by 26 to find column letters in reverse
+        order.  These numbers are 1-based, and can be converted to ASCII
+        ordinals by adding 64.
+
+        """
+        # these indicies corrospond to A -> ZZZ and include all allowed
+        # columns
+        if not 1 <= col_idx <= 18278:
+            raise ValueError("Invalid column index {0}".format(col_idx))
+        letters = []
+        while col_idx > 0:
+            col_idx, remainder = divmod(col_idx, 26)
+            # check for exact division and borrow if needed
+            if remainder == 0:
+                remainder = 26
+                col_idx -= 1
+            letters.append(chr(remainder+64))
+        return ''.join(reversed(letters))
+        
+    # get column number corresponding to header key
+    def get_col(col_key,dict_in):
+        #first column is key of global dict and not values
+        col_in=2
+        for k,v in dict_in.items():
+            if(col_key==k):
+                return(col_in)
+            col_in+=1
+        return(col_in)
     
+    # init headers
     line_in=1
-    for item in dataset:
+    for k,v in datadict.items():
         col_in=1
-        for col in item:
-            ws.cell(row=line_in, column=col_in).value = col
-            col_in=col_in+1
-        line_in=line_in+1
+        for sk,sv in v.items():
+            # import pdb;pdb.set_trace()
+            if(col_in == 1):
+                ws.cell(row=line_in, column=col_in).value = k
+                ws.column_dimensions[_get_column_letter(col_in)].width = 25
+                col_in +=1
+            if(line_in == 1):
+                ws.cell(row=line_in, column=col_in).value = sk
+                ws.column_dimensions[_get_column_letter(col_in)].width = 25
+            else:
+                ws.cell(row=line_in, column=get_col(sk,datadict[STR_KEY])).value = sv
+            col_in +=1
+        line_in +=1
+
+    # for item in dataset:
+    #     col_in=1
+    #     for col in item:
+    #         ws.cell(row=line_in, column=col_in).value = col
+    #         col_in=col_in+1
+    #     line_in=line_in+1
+
+
+    for k in datadict.keys():
+        col_in=1
+        for v in datadict.values():
+            for single_v in v:
+                # print(k+":"+single_v)
+                # ws.cell(row=line_in, column=col_in).value = col
+                col_in +=1
+        line_in+=1
 
 
     save_excel_file(wb, sprint_number)
