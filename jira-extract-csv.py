@@ -20,10 +20,10 @@ from dateutil.parser import parse
 
 #tdc board = 217
 TDC_JIRA_BOARD_ID = 217
-PATH_EXCEL_FILE = "c:\\Users\\eguillossou\\"
+USER_LOGIN = os.getenv('USER_JIRA','eguillossou')
+PATH_EXCEL_FILE = "c:\\Users\\{}\\".format(USER_LOGIN)
 EXCEL_FILE_NAME = "jira-full-report"
 JIRA_URL = "https://jira.talendforge.org/"
-USER_LOGIN = 'eguillossou'
 USER_PASSWORD = os.environ['PASSWORD_JIRA']
 TDC_JIRA_SPRINT_PAGINATION = 30
 
@@ -140,7 +140,10 @@ def save_file(_allissues, sprint_number_in):
 def save_excel_file(wb_in, sprint_number_in):
     my_file = "{}{}{}.xlsx".format(PATH_EXCEL_FILE, EXCEL_FILE_NAME, sprint_number_in)
     log("Saving file to : "+my_file)
-    wb_in.save(my_file)
+    try:
+        wb_in.save(my_file)
+    except IOError:
+        print("File already opened. Closed it first.")
 
 if __name__ == '__main__':
 
@@ -320,6 +323,7 @@ if __name__ == '__main__':
             # Interested in only seconds precision, so slice unnecessary part
             datetime_creation = datetime.strptime(datetime_creation[:19], "%Y-%m-%dT%H:%M:%S")
             datadict[key][STR_CREATIONDATE] = datetime_creation
+            datadict[key][STR_NEWDATE] = datetime_creation
 
         # Get datetime resolution
         datetime_resolution = issue.fields.resolutiondate
@@ -345,11 +349,11 @@ if __name__ == '__main__':
 
                     # print(date-previous_status_change_date)
 
-                    datadict[key][switch_date(item.toString)] = date
+                    datadict[key][switch_date(item.fromString)] = date
                     # dataset.append([key,issue.fields.issuetype.name if hasattr(issue.fields.issuetype,'name') else "None",item.fromString,item.toString,date])
                     # status_update[item.fromString] += round((date-previous_status_change_date)/3600000 *10) / 10
                     status_update[item.fromString] += date-previous_status_change_date
-                    datadict[key][switch_time(item.toString)] = status_update[item.fromString]
+                    datadict[key][switch_time(item.fromString)] = status_update[item.fromString]
                     previous_status_change_date = date
 
     wb = Workbook()
@@ -363,7 +367,7 @@ if __name__ == '__main__':
         ordinals by adding 64.
 
         """
-        # these indicies corrospond to A -> ZZZ and include all allowed
+        # these indicies correspond to A -> ZZZ and include all allowed
         # columns
         if not 1 <= col_idx <= 18278:
             raise ValueError("Invalid column index {0}".format(col_idx))
@@ -389,19 +393,18 @@ if __name__ == '__main__':
     
     # init headers
     line_in=1
+    col_in=1
     for k,v in datadict.items():
+        print("k={}/v={}/c={}/l={}".format(k,v,col_in,line_in))
         col_in=1
+        ws.cell(row=line_in, column=col_in).value = k
+        ws.column_dimensions[_get_column_letter(col_in)].width = 25
+        col_in +=1
         for sk,sv in v.items():
             # import pdb;pdb.set_trace()
-            if(col_in == 1):
-                ws.cell(row=line_in, column=col_in).value = k
-                ws.column_dimensions[_get_column_letter(col_in)].width = 25
-                col_in +=1
-            if(line_in == 1):
-                ws.cell(row=line_in, column=col_in).value = sk
-                ws.column_dimensions[_get_column_letter(col_in)].width = 25
-            else:
-                ws.cell(row=line_in, column=get_col(sk,datadict[STR_KEY])).value = sv
+            print("sk={}/sv={}/c={}/l={}/gc={}".format(sk,sv,col_in,line_in,get_col(sk,datadict[STR_KEY])))
+            ws.cell(row=line_in, column=get_col(sk,datadict[STR_KEY])).value = sv
+            ws.column_dimensions[_get_column_letter(col_in)].width = 25
             col_in +=1
         line_in +=1
 
