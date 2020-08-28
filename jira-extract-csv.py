@@ -245,7 +245,6 @@ def switch_time(transition):
         return switcher.get(transition,'\nWARNING: unknown transition time:'+transition+'\n')
 
 def fill_dataset(issues_in, no_header = False):
-    status_update={}
     dict_out = {}
     if(not no_header):
         dict_out = {STR_KEY: {} }
@@ -282,6 +281,7 @@ def fill_dataset(issues_in, no_header = False):
                             STR_LEADTIME:STR_LEADTIME
                             }
     for issue in issues_in:
+        status_update={}
         if hasattr(issue, 'key'):
             key=issue.key
             # print("key: {}".format(key))
@@ -345,17 +345,19 @@ if __name__ == '__main__':
     print("Sprint number : {}".format(sprint_number))
 
     issues_n=jira.search_issues(construct_jql_query(sprint_number,jira), startAt=0, maxResults=500, validate_query=True, fields=None, expand="changelog", json_result=None)
+    datadict = fill_dataset(issues_n)
 
     if sprint_number>2:
         issues_n_minus_1=jira.search_issues(construct_jql_query(sprint_number-1,jira), startAt=0, maxResults=500, validate_query=True, fields=None, expand="changelog", json_result=None)
         issues_n_minus_2=jira.search_issues(construct_jql_query(sprint_number-2,jira), startAt=0, maxResults=500, validate_query=True, fields=None, expand="changelog", json_result=None)
+        datadict_n_minus_1 = fill_dataset(issues_n_minus_1,True)
+        datadict_n_minus_2 = fill_dataset(issues_n_minus_2,True)
 
-    datadict = fill_dataset(issues_n)
-    datadict_n_minus_1 = fill_dataset(issues_n_minus_1,True)
-    import pdb;pdb.set_trace()
-    datadict_n_minus_2 = fill_dataset(issues_n_minus_2,True)
 
-    datadict_merged = {**datadict, **datadict_n_minus_1,**datadict_n_minus_2}
+    if sprint_number>2:
+        datadict_merged = {**datadict, **datadict_n_minus_1,**datadict_n_minus_2}
+    else:
+        datadict_merged = datadict
 
     wb = Workbook()
     ws = wb.active
