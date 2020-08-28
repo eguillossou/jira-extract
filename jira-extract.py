@@ -17,10 +17,10 @@ from dateutil.parser import parse
 
 #tdc board = 217
 TDC_JIRA_BOARD_ID = 217
-PATH_EXCEL_FILE = "c:\\Users\\eguillossou\\"
-EXCEL_FILE_NAME = "jira-report"
+USER_LOGIN = os.getenv('USER_JIRA','eguillossou')
+PATH_EXCEL_FILE = "c:\\Users\\{}\\".format(USER_LOGIN)
+EXCEL_FILE_NAME = "jira-full-report"
 JIRA_URL = "https://jira.talendforge.org/"
-USER_LOGIN = 'eguillossou'
 USER_PASSWORD = os.environ['PASSWORD_JIRA']
 TDC_JIRA_SPRINT_PAGINATION = 30
 
@@ -132,7 +132,10 @@ def fill_headers_and_values(ws_in, header_list_in, lineidx_in, issues_line_in):
 def save_excel_file(wb_in, sprint_number_in):
     my_file = "{}{}{}.xlsx".format(PATH_EXCEL_FILE, EXCEL_FILE_NAME, sprint_number_in)
     log("Saving file to : "+my_file)
-    wb_in.save(my_file)
+    try:
+        wb_in.save(my_file)
+    except IOError:
+        print("File already opened. Closed it first.")
 
 if __name__ == '__main__':
 
