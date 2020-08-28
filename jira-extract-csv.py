@@ -24,7 +24,11 @@ USER_LOGIN = os.getenv('USER_JIRA','eguillossou')
 PATH_EXCEL_FILE = "c:\\Users\\{}\\".format(USER_LOGIN)
 EXCEL_FILE_NAME = "jira-full-report"
 JIRA_URL = "https://jira.talendforge.org/"
-USER_PASSWORD = os.environ['PASSWORD_JIRA']
+if 'PASSWORD_JIRA' in os.environ:
+    USER_PASSWORD = os.environ['PASSWORD_JIRA']
+else:
+    print("PASSWORD_JIRA env var need to be set first.")
+    exit
 TDC_JIRA_SPRINT_PAGINATION = 30
 
 # New	Accepted
@@ -35,6 +39,7 @@ TDC_JIRA_SPRINT_PAGINATION = 30
 # Merge	Final Check
 STR_KEY="Issue key"
 STR_TYPE="Issue Type"
+STR_SUMMARY="Issue Summary"
 STR_CREATIONDATE="Creation Date"
 STR_RESODATE="Resolution Date"
 STR_NEWDATE="In New Date"
@@ -250,6 +255,7 @@ def fill_dataset(issues_in, no_header = False):
         dict_out = {STR_KEY: {} }
         dict_out[STR_KEY]={
                             STR_TYPE:STR_TYPE,
+                            STR_SUMMARY:STR_SUMMARY,
                             STR_CREATIONDATE:STR_CREATIONDATE,
                             STR_RESODATE:STR_RESODATE,
                             STR_TODODATE:STR_TODODATE,
@@ -281,6 +287,7 @@ def fill_dataset(issues_in, no_header = False):
                             STR_LEADTIME:STR_LEADTIME
                             }
     for issue in issues_in:
+        # import pdb;pdb.set_trace()
         status_update={}
         if hasattr(issue, 'key'):
             key=issue.key
@@ -303,8 +310,10 @@ def fill_dataset(issues_in, no_header = False):
                 # Interested in only seconds precision, so slice unnecessary part
             datetime_resolution = datetime.strptime(datetime_resolution[:19], "%Y-%m-%dT%H:%M:%S")
             dict_out[key][STR_RESODATE] = datetime_resolution
+            dict_out[key][STR_LEADTIME] = str(datetime_resolution-datetime_creation)
         
         dict_out[key][STR_TYPE] = issue.fields.issuetype.name
+        dict_out[key][STR_SUMMARY] = issue.fields.summary
 
         previous_status_change_date = datetime_creation
 
@@ -327,7 +336,6 @@ def fill_dataset(issues_in, no_header = False):
                     status_update[item.fromString] += date-previous_status_change_date
                     dict_out[key][switch_time(item.fromString)] = str(status_update[item.fromString])
                     previous_status_change_date = date
-    # import pdb;pdb.set_trace()
     return(dict_out)
 
 if __name__ == '__main__':
@@ -362,10 +370,12 @@ if __name__ == '__main__':
     wb = Workbook()
     ws = wb.active
     ws.title ="JIRAIssueTransitions"
+    ws.freeze_panes = 'B2'
     
     # fill worksheet
     line_in=1
     col_in=1
+    max_col=1
     for k,v in datadict_merged.items():
         col_in=1
         fill_cell(ws,line_in,col_in,k)
@@ -373,6 +383,10 @@ if __name__ == '__main__':
         for sk,sv in v.items():
             fill_cell(ws,line_in,get_col(sk,datadict_merged[STR_KEY]),sv)
             col_in +=1
+            if(max_col<col_in): max_col +=1
         line_in +=1
+
+    # ws.auto_filter.ref = 'A1:AF1'
+    ws.auto_filter.ref = "A1:{}1".format(_get_column_letter(max_col))
 
     save_excel_file(wb, sprint_number)

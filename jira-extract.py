@@ -21,7 +21,11 @@ USER_LOGIN = os.getenv('USER_JIRA','eguillossou')
 PATH_EXCEL_FILE = "c:\\Users\\{}\\".format(USER_LOGIN)
 EXCEL_FILE_NAME = "jira-full-report"
 JIRA_URL = "https://jira.talendforge.org/"
-USER_PASSWORD = os.environ['PASSWORD_JIRA']
+if 'PASSWORD_JIRA' in os.environ:
+    USER_PASSWORD = os.environ['PASSWORD_JIRA']
+else:
+    print("PASSWORD_JIRA env var need to be set first.")
+    exit
 TDC_JIRA_SPRINT_PAGINATION = 30
 
 def log(str):
