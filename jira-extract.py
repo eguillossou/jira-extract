@@ -14,22 +14,25 @@ from dateutil.parser import parse
 # for debug purpose : import pdb;pdb.set_trace()
 # issue_ids_in.fields.__dict__ to have a struct
 #pp issue_ids_in.changelog.histories
+def log(str):
+    print(str)
 
 #tdc board = 217
 TDC_JIRA_BOARD_ID = 217
+EXCEL_FILE_NAME = "jira-report"
+JIRA_URL = "https://jira.talendforge.org/"
+TDC_JIRA_SPRINT_PAGINATION = 30
+
+if 'USER_JIRA' not in os.environ:
+    log("CONFIG: USER_JIRA environment variable set to default")
 USER_LOGIN = os.getenv('USER_JIRA','eguillossou')
 PATH_EXCEL_FILE = "c:\\Users\\{}\\".format(USER_LOGIN)
-EXCEL_FILE_NAME = "jira-full-report"
-JIRA_URL = "https://jira.talendforge.org/"
+
 if 'PASSWORD_JIRA' in os.environ:
     USER_PASSWORD = os.environ['PASSWORD_JIRA']
 else:
-    print("PASSWORD_JIRA env var need to be set first.")
-    exit
-TDC_JIRA_SPRINT_PAGINATION = 30
-
-def log(str):
-    print(str)
+    log("CONFIG: Missing environment variable PASSWORD_JIRA.")
+    sys.exit(1)
 
 def arguments():
     parser = argparse.ArgumentParser(description='Launch extraction and process.')
@@ -143,9 +146,6 @@ def save_excel_file(wb_in, sprint_number_in):
 
 if __name__ == '__main__':
 
-    if('PASSWORD_JIRA' not in os.environ):
-        log("Missing environment variable PASSWORD_JIRA.")
-        sys.exit(1)
 
     jira_options={'server': JIRA_URL ,'agile_rest_path': 'agile'}
     jira=JIRA(options=jira_options,basic_auth=(USER_LOGIN , USER_PASSWORD))

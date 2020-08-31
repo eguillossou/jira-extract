@@ -17,19 +17,25 @@ from dateutil.parser import parse
 # issue_ids_in.fields.__dict__ to have a struct
 #pp issue_ids_in.changelog.histories
 #pp history.__dict__
+def log(str):
+    print(str)
 
 #tdc board = 217
 TDC_JIRA_BOARD_ID = 217
-USER_LOGIN = os.getenv('USER_JIRA','eguillossou')
-PATH_EXCEL_FILE = "c:\\Users\\{}\\".format(USER_LOGIN)
 EXCEL_FILE_NAME = "jira-full-report"
 JIRA_URL = "https://jira.talendforge.org/"
+TDC_JIRA_SPRINT_PAGINATION = 30
+
+if 'USER_JIRA' not in os.environ:
+    log("CONFIG: USER_JIRA environment variable set to default")
+USER_LOGIN = os.getenv('USER_JIRA','eguillossou')
+PATH_EXCEL_FILE = "c:\\Users\\{}\\".format(USER_LOGIN)
+
 if 'PASSWORD_JIRA' in os.environ:
     USER_PASSWORD = os.environ['PASSWORD_JIRA']
 else:
-    print("PASSWORD_JIRA env var need to be set first.")
-    exit
-TDC_JIRA_SPRINT_PAGINATION = 30
+    log("CONFIG: Missing environment variable PASSWORD_JIRA.")
+    sys.exit(1)
 
 # New	Accepted
 # Accepted	In Progress
@@ -73,8 +79,6 @@ STR_TODOTIME="In To Do Time"
 STR_LEADTIME="Lead time"
 STR_BLOCKEDTIME="In Blocked Time"
 
-def log(str):
-    print(str)
 
 def arguments():
     parser = argparse.ArgumentParser(description='Launch extraction and process.')
