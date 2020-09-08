@@ -4,6 +4,7 @@ const axios = require('axios');
 const ExcelJS = require('exceljs');
 const { query } = require('express');
 const { fill } = require('lodash');
+import percentile from 'just-percentile';
 
 const TDC_JIRA_BOARD_ID = 217
 const EXCEL_FILE_NAME = "jira-report-js-full.xlsx"
@@ -44,7 +45,14 @@ const STR_ONHOLDTIME="In On hold Time"
 const STR_TODOTIME="In To Do Time"
 const STR_LEADTIME="Lead time"
 const STR_CYCLETIME="Cycle time"
-const STR_CYCLETIMERANGE="Cycle time"
+const STR_KEY_RESOLVED="Issue key resolved"
+const STR_RESOLUTION_DATE_RESOLVED="Resolution date for resolved"
+const STR_LEADTIME_RESOLVED="Lead time resolved"
+const STR_CYCLETIME_RESOLVED="Cycle time resolved"
+const STR_CENTILE_20TH_CYCLETIME="Centile 20th"
+const STR_CENTILE_50TH_CYCLETIME="Centile 50th"
+const STR_CENTILE_80TH_CYCLETIME="Centile 80th"
+const STR_CYCLETIMERANGE="Cycle time Range"
 const STR_CYCLETIMEDISTRIBUTION="Cycle time Distribution"
 
 const worksheetName = 'Raw_Metrics'
@@ -64,7 +72,7 @@ const getJIRAVariables = () => {
         printError(`CONFIG ERROR: JIRA_PASSWORD environment variable not set.`);
     }
 
-    return { login: JIRA_LOGIN, password: JIRA_PASSWORD };
+    return { login: JIRA_LOGIN, password: decodeURIComponent(escape( Buffer.from(JIRA_PASSWORD, 'base64').toString() )) };
 }
 
 
@@ -141,6 +149,13 @@ const jsontoexcel = async (json) => {
         {header: STR_TODOTIME, key:STR_TODOTIME, width: '25'},
         {header: STR_LEADTIME, key:STR_LEADTIME, width: '25'},
         {header: STR_CYCLETIME, key:STR_CYCLETIME, width: '25'},
+        {header: STR_KEY_RESOLVED, key:STR_KEY_RESOLVED, width: '25'},
+        {header: STR_RESOLUTION_DATE_RESOLVED, key:STR_RESOLUTION_DATE_RESOLVED, width: '25'},
+        {header: STR_LEADTIME_RESOLVED, key:STR_LEADTIME_RESOLVED, width: '25'},
+        {header: STR_CYCLETIME_RESOLVED, key:STR_CYCLETIME_RESOLVED, width: '25'},
+        {header: STR_CENTILE_20TH_CYCLETIME, key:STR_CENTILE_20TH_CYCLETIME, width: '25'},
+        {header: STR_CENTILE_50TH_CYCLETIME, key:STR_CENTILE_50TH_CYCLETIME, width: '25'},
+        {header: STR_CENTILE_80TH_CYCLETIME, key:STR_CENTILE_80TH_CYCLETIME, width: '25'},
         {header: STR_CYCLETIMERANGE, key:STR_CYCLETIMERANGE, width: '25'},
         {header: STR_CYCLETIMEDISTRIBUTION, key:STR_CYCLETIMEDISTRIBUTION, width: '25'},
     ]
@@ -153,13 +168,12 @@ const jsontoexcel = async (json) => {
         newRow.getCell(STR_KEY).value = issue.key;
         newRow.commit();
         printInfo(`Analysing ${newRow.getCell(STR_KEY).value} item`)
-
+        
         // # Get datetime creation
         const datetime_creation = issue.fields.created ? new Date(issue.fields.created) : undefined;
         if(datetime_creation !== undefined) {
             newRow.getCell(STR_CREATIONDATE).value = datetime_creation.toLocaleString("fr-FR",{day:"numeric",month:"numeric",year:"numeric"});
             newRow.getCell(STR_NEWDATE).value = datetime_creation.toLocaleString();
-            // printInfo(`Creation Date ${newRow.getCell(STR_CREATIONDATE).value}`)
         }
         
         // # Get datetime resolution
@@ -173,7 +187,7 @@ const jsontoexcel = async (json) => {
         
         newRow.getCell(STR_TYPE).value = issue.fields.issuetype.name;
         newRow.getCell(STR_SUMMARY).value = issue.fields.summary;
-
+        
         var previousStatusChangeDate = datetime_creation;
         let historyA = issue.changelog.histories;
         for(let historyIdx in historyA) {
@@ -189,7 +203,7 @@ const jsontoexcel = async (json) => {
                     let dateTransition = new Date(historyA[historyIdx].created);
                     statusUpdate[item.fromString] += (dateTransition - previousStatusChangeDate);
                     previousStatusChangeDate = dateTransition;
-
+                    
                     newRow.getCell(switchDateOrTime(item.fromString)).value = dateTransition.toLocaleString();
                     // newRow.getCell(switchDateOrTime(item.fromString,false)).value = formatDateFromDays(statusUpdate[item.fromString]/(1000*60*60*24));
                     newRow.getCell(switchDateOrTime(item.fromString,false)).value = statusUpdate[item.fromString]/(1000*60*60*24);
@@ -198,40 +212,127 @@ const jsontoexcel = async (json) => {
         }
         // CYCLE Time series is a sum of in progress/code review/validation/merge/final check time
         newRow.getCell(STR_CYCLETIME).value = 
-            newRow.getCell(STR_PROGRESSTIME).value+
-            newRow.getCell(STR_REVIEWTIME).value+
-            newRow.getCell(STR_VALIDTIME).value+
-            newRow.getCell(STR_MERGETIME).value+
-            newRow.getCell(STR_FINALCTIME).value;
-            
+        newRow.getCell(STR_PROGRESSTIME).value+
+        newRow.getCell(STR_REVIEWTIME).value+
+        newRow.getCell(STR_VALIDTIME).value+
+        newRow.getCell(STR_MERGETIME).value+
+        newRow.getCell(STR_FINALCTIME).value;
+        
     }//end parsing issues
+
+    //fill Cycle time and lead time for 
     
     //fill Distribution
     const CTCol = sheet.getColumn(STR_CYCLETIME);
     //Range to fill: 15 values, step 3
-    const range = Array(15).fill(0).map((x,y)=>x+y*3);
+    // const range = Array(15).fill(0).map((x,y)=>x+y*3);
     // const freq = Array(range.length);
     var freq = {}
-    let rgIdx = 0;
     const step = 3
-    for(let rgIdx=0; rgIdx<range.length;rgIdx++) {
-        
-        CTCol.eachCell(function(cell, rowNumber) {
-            if(cell.value !== STR_CYCLETIME && 
-                cell.value !== 0) {
-                if(Math.floor(cell/step) in freq){
-                    freq[Math.floor(cell/step)] = freq[Math.floor(cell/step)]+1;
+    
+    CTCol.eachCell(function(cell, rowNumber) {
+        if(cell.value !== STR_CYCLETIME && 
+            cell.value !== 0 &&
+            sheet.getColumn(STR_RESODATE).values[rowNumber] !== undefined &&
+            sheet.getColumn(STR_RESODATE).values[rowNumber] !== STR_RESODATE &&
+            cell.value<filterHighCycleTime &&
+            cell.value>=filterLowCycleTime) {
+                let rangeIdx = Math.floor(cell/step);
+                if(rangeIdx in freq){
+                    freq[rangeIdx] = freq[rangeIdx]+1;
                 } else {
-                    freq[Math.floor(cell/step)] = 1;
+                    freq[rangeIdx] = 1;
                 }
-                printInfo(`freq ${freq[Math.floor(cell/step)]} cell ${cell} `);
-                // newRow.getCell(STR_CYCLETIMEDISTRIBUTION).value = newRow.getCell(STR_CYCLETIMEDISTRIBUTION).value+1;
-            }
-        });
+        }
+    });
+
+    //fill Resolved issue metrics
+    const resDateCol = sheet.getColumn(STR_RESODATE);
+    let sortedColumns = []
+    let indexResoDate = 2;
+    resDateCol.eachCell( function(cell,rowNumber) {
+        if( cell.value !== STR_RESODATE && 
+            cell.value !== null ) {
+                sortedColumns.push(
+                    { 
+                    "key":sheet.getColumn(STR_KEY).values[rowNumber],
+                    "resolution":sheet.getColumn(STR_RESODATE).values[rowNumber],
+                    "cycletime": sheet.getColumn(STR_CYCLETIME).values[rowNumber],
+                    "leadtime": sheet.getColumn(STR_LEADTIME).values[rowNumber]
+                });
+                indexResoDate = indexResoDate + 1 ;
+        }
+    });
+
+    //sort array by resolution date
+    sortedColumns.sort((a,b) => new Date(a.resolution).getTime() - new Date(b.resolution).getTime());
+    sortedColumns.forEach((value,index) => {
+        currentRow = sheet.getRow(index+2);
+        currentRow.getCell(STR_KEY_RESOLVED).value = value.key;
+        currentRow.getCell(STR_RESOLUTION_DATE_RESOLVED).value = value.resolution;
+        currentRow.getCell(STR_CYCLETIME_RESOLVED).value = (Math.round(value.cycletime * 100)/100).toFixed(2);
+        currentRow.getCell(STR_LEADTIME_RESOLVED).value = (Math.round(value.leadtime * 100)/100).toFixed(2);
+    });
+
+    //fill centile 20th | 50th | 80th of cycle time
+    rowTwo =  sheet.getRow(index+2);
+    rowTwo.getCell(STR_CENTILE_20TH_CYCLETIME).value = ;
+    rowTwo.getCell(STR_CENTILE_20TH_CYCLETIME).value = ;
+    rowTwo.getCell(STR_CENTILE_20TH_CYCLETIME).value = ;
+        
+    const maxKey = Math.max(...Object.keys(freq));
+    for(let steps = 0;steps<maxKey+2;steps++) {
+        //jump first row <=> title
+        currentRow = sheet.getRow(steps+2);
+        currentRow.getCell(STR_CYCLETIMERANGE).value = steps*step;
+        currentRow.getCell(STR_CYCLETIMEDISTRIBUTION).value = freq[steps] !== undefined ? freq[steps]:0;
     }
-    // write to a file
-    writeExcelFile(workbook);
-}
+    
+        //after filling all raw metrics, split with group row
+        const STR_GRP_1 = { "title":'Raw metrics', "keyStart":STR_KEY, "keyEnd":STR_CYCLETIME};
+        const STR_GRP_2 = { "title":'Raw metrics resolved issues only', "keyStart":STR_KEY_RESOLVED, "keyEnd":STR_CYCLETIME_RESOLVED};
+        const STR_GRP_3 = { "title":'Cycle time distribution', "keyStart":STR_CYCLETIMERANGE, "keyEnd":STR_CYCLETIMEDISTRIBUTION};
+
+        let grpRow = [];
+        grpRow[sheet.getColumn(STR_GRP_1.keyStart).number] = STR_GRP_1.title;
+        grpRow[sheet.getColumn(STR_GRP_2.keyStart).number] = STR_GRP_2.title;
+        grpRow[sheet.getColumn(STR_GRP_3.keyStart).number] = STR_GRP_3.title;
+        
+        sheet.insertRow(1,grpRow);
+        
+        sheet.mergeCells(1,sheet.getColumn(STR_GRP_1.keyStart).number,1,sheet.getColumn(STR_GRP_1.keyEnd).number);
+        sheet.mergeCells(1,sheet.getColumn(STR_GRP_2.keyStart).number,1,sheet.getColumn(STR_GRP_2.keyEnd).number);
+        sheet.mergeCells(1,sheet.getColumn(STR_GRP_3.keyStart).number,1,sheet.getColumn(STR_GRP_3.keyEnd).number);
+
+        const getCellForStyle = (_sheet, _key, _rowNumber) => {
+            return(_sheet.getRow(_rowNumber).getCell(_sheet.getColumn(_key).number));
+        }
+        const cell1 = getCellForStyle(sheet,STR_GRP_1.keyStart,1);
+        const cell2 = getCellForStyle(sheet,STR_GRP_2.keyStart,1);
+        const cell3 = getCellForStyle(sheet,STR_GRP_3.keyStart,1);
+        const centerMiddleStyle = { vertical: 'middle', horizontal: 'center' };
+        cell1.alignment = centerMiddleStyle;
+        cell2.alignment = centerMiddleStyle;
+        cell3.alignment = centerMiddleStyle;
+        cell1.fill = {
+            type: 'pattern',
+            pattern:'solid',
+            fgColor:{argb:'ccf2ff'},
+        };
+        cell2.fill = {
+            type: 'pattern',
+            pattern:'solid',
+            fgColor:{argb:'f2d9e6'},
+        };
+        cell3.fill = {
+            type: 'pattern',
+            pattern:'solid',
+            fgColor:{argb:'ccffcc'},
+        };
+
+        // write to a file
+        writeExcelFile(workbook);
+    }
 
 const writeExcelFile = async (workbook) => {
     try {
