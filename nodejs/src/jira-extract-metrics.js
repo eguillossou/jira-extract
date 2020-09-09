@@ -166,7 +166,7 @@ const jsontoexcel = async (json) => {
         {header: STR_CYCLETIMEDISTRIBUTION, key:STR_CYCLETIMEDISTRIBUTION, width: '25'},
         {header: STR_LEADTIMERANGE, key:STR_LEADTIMERANGE, width: '25'},
         {header: STR_LEADTIMEDISTRIBUTION, key:STR_LEADTIMEDISTRIBUTION, width: '25'},
-    ]
+    ];
     // Cross all issues retrieved from JIRA jql query
     for(let issueIdx in json.issues){
         const issue = json.issues[issueIdx];
@@ -251,95 +251,84 @@ const jsontoexcel = async (json) => {
             return(freq);
         }
         
-    //fill Distribution Cycle time
-    var freqCT = {};
-    const step = 3;
-    freqCT = freqCellColumnByKeyColumn(step, STR_RESODATE, STR_CYCLETIME);
-    
-    const maxKey = Math.max(...Object.keys(freqCT));
-    for(let steps = 0;steps<maxKey+2;steps++) {
-        //jump first row <=> title
-        currentRow = sheet.getRow(steps+2);
-        currentRow.getCell(STR_CYCLETIMERANGE).value = steps*step;
-        currentRow.getCell(STR_CYCLETIMEDISTRIBUTION).value = freqCT[steps] !== undefined ? freqCT[steps]:0;
-    }
-    //fill Distribution Lead time
-    var freqLT = {};
-    const stepLT = 5;
-    freqLT = freqCellColumnByKeyColumn(stepLT, STR_RESODATE, STR_LEADTIME);
-    
-    const maxKeyLT = Math.max(...Object.keys(freqLT));
-    for(let steps = 0;steps<maxKeyLT+2;steps++) {
-        //jump first row <=> title
-        currentRow = sheet.getRow(steps+2);
-        currentRow.getCell(STR_LEADTIMERANGE).value = steps*stepLT;
-        currentRow.getCell(STR_LEADTIMEDISTRIBUTION).value = freqLT[steps] !== undefined ? freqLT[steps]:0;
-    }
+        //fill Distribution Cycle time
+        var freqCT = {};
+        const step = 3;
+        freqCT = freqCellColumnByKeyColumn(step, STR_RESODATE, STR_CYCLETIME);
         
-    //fill Cycle time and lead time for 
-
-    //fill Resolved issue metrics
-    const resDateCol = sheet.getColumn(STR_RESODATE);
-    let sortedColumns = []
-    let indexResoDate = 2;
-    resDateCol.eachCell( function(cell,rowNumber) {
-        if( cell.value !== STR_RESODATE && 
-            cell.value !== null ) {
-                sortedColumns.push(
-                    { 
-                    "key":sheet.getColumn(STR_KEY).values[rowNumber],
-                    "resolution":sheet.getColumn(STR_RESODATE).values[rowNumber],
-                    "cycletime": sheet.getColumn(STR_CYCLETIME).values[rowNumber],
-                    "leadtime": sheet.getColumn(STR_LEADTIME).values[rowNumber]
-                });
-                indexResoDate = indexResoDate + 1 ;
+        const maxKey = Math.max(...Object.keys(freqCT));
+        for(let steps = 0;steps<maxKey+2;steps++) {
+            //jump first row <=> title
+            currentRow = sheet.getRow(steps+2);
+            currentRow.getCell(STR_CYCLETIMERANGE).value = steps*step;
+            currentRow.getCell(STR_CYCLETIMEDISTRIBUTION).value = freqCT[steps] !== undefined ? freqCT[steps]:0;
         }
-    });
-
-    //sort array by resolution date and removing Too high values and too low as well
-    let filteredColumn = sortedColumns
-    .filter(a => a.cycletime > filterLowCycleTime && a.cycletime <= filterHighCycleTime)
-    .sort((a,b) => new Date(a.resolution).getTime() - new Date(b.resolution).getTime());
-
-    filteredColumn.forEach((value,index) => {
-        currentRow = sheet.getRow(index+2);
-        currentRow.getCell(STR_KEY_RESOLVED).value = value.key;
-        currentRow.getCell(STR_RESOLUTION_DATE_RESOLVED).value = value.resolution;
-        currentRow.getCell(STR_CYCLETIME_RESOLVED).value = Number((Math.round(value.cycletime * 100)/100).toFixed(2));//.replace(/\./gi, ",");
-        currentRow.getCell(STR_LEADTIME_RESOLVED).value = Number((Math.round(value.leadtime * 100)/100).toFixed(2));//.replace(/\./gi, ",");
-    });
-
-    //fill centile 20th | 50th | 80th of cycle time
-    const centileThCycleTime = (centileTh) => {
-        return (percentile(
-            filteredColumn
-        .map((value) => value.cycletime)
-        .sort((a,b)=> a-b), centileTh));
-    }
-    const centile20th = centileThCycleTime(20);
-    const centile50th = centileThCycleTime(50);
-    const centile80th = centileThCycleTime(80);
-
-    //fill centile  50th | 80th of lead time
-    const centileThLeadTime = (centileTh) => {
-        return (percentile(
-            filteredColumn
-        .map((value) => value.leadtime)
-        .sort((a,b)=> a-b), centileTh));
-    }
-    const centile50thLeadTime = centileThLeadTime(50);
-    const centile80thLeadTime = centileThLeadTime(80);
-    
-    filteredColumn.forEach((value,index) => {
-        currentRow = sheet.getRow(index+2);
-        currentRow.getCell(STR_CENTILE_20TH_CYCLETIME).value = centile20th;
-        currentRow.getCell(STR_CENTILE_50TH_CYCLETIME).value = centile50th;
-        currentRow.getCell(STR_CENTILE_80TH_CYCLETIME).value = centile80th;
-        currentRow.getCell(STR_CENTILE_50TH_LEADTIME).value = centile50thLeadTime;
-        currentRow.getCell(STR_CENTILE_80TH_LEADTIME).value = centile80thLeadTime;
-    });
+        //fill Distribution Lead time
+        var freqLT = {};
+        const stepLT = 5;
+        freqLT = freqCellColumnByKeyColumn(stepLT, STR_RESODATE, STR_LEADTIME);
         
-    
+        const maxKeyLT = Math.max(...Object.keys(freqLT));
+        for(let steps = 0;steps<maxKeyLT+2;steps++) {
+            //jump first row <=> title
+            currentRow = sheet.getRow(steps+2);
+            currentRow.getCell(STR_LEADTIMERANGE).value = steps*stepLT;
+            currentRow.getCell(STR_LEADTIMEDISTRIBUTION).value = freqLT[steps] !== undefined ? freqLT[steps]:0;
+        }
+            
+        //fill Cycle time and lead time for 
+
+        //fill Resolved issue metrics
+        const resDateCol = sheet.getColumn(STR_RESODATE);
+        let sortedColumns = []
+        let indexResoDate = 2;
+        resDateCol.eachCell( function(cell,rowNumber) {
+            if( cell.value !== STR_RESODATE && 
+                cell.value !== null ) {
+                    sortedColumns.push(
+                        { 
+                        "key":sheet.getColumn(STR_KEY).values[rowNumber],
+                        "resolution":sheet.getColumn(STR_RESODATE).values[rowNumber],
+                        "cycletime": sheet.getColumn(STR_CYCLETIME).values[rowNumber],
+                        "leadtime": sheet.getColumn(STR_LEADTIME).values[rowNumber]
+                    });
+                    indexResoDate = indexResoDate + 1 ;
+            }
+        });
+
+        //sort array by resolution date and removing Too high values and too low as well
+        let filteredColumn = sortedColumns
+        .filter(a => a.cycletime > filterLowCycleTime && a.cycletime <= filterHighCycleTime)
+        .sort((a,b) => new Date(a.resolution).getTime() - new Date(b.resolution).getTime());
+        
+        //fill centile 20th | 50th | 80th of cycle time
+        const centileThCycleTime = (centileTh) => {
+            return (percentile(
+                filteredColumn
+            .map((value) => value.cycletime)
+            .sort((a,b)=> a-b), centileTh));
+        }
+        //fill centile  50th | 80th of lead time
+        const centileThLeadTime = (centileTh) => {
+            return (percentile(
+                filteredColumn
+            .map((value) => value.leadtime)
+            .sort((a,b)=> a-b), centileTh));
+        }
+
+        filteredColumn.forEach((value,index) => {
+            currentRow = sheet.getRow(index+2);
+            currentRow.getCell(STR_KEY_RESOLVED).value = value.key;
+            currentRow.getCell(STR_RESOLUTION_DATE_RESOLVED).value = value.resolution;
+            currentRow.getCell(STR_CYCLETIME_RESOLVED).value = Number((Math.round(value.cycletime * 100)/100).toFixed(2));
+            currentRow.getCell(STR_LEADTIME_RESOLVED).value = Number((Math.round(value.leadtime * 100)/100).toFixed(2));
+            currentRow.getCell(STR_CENTILE_20TH_CYCLETIME).value = centileThCycleTime(20);
+            currentRow.getCell(STR_CENTILE_50TH_CYCLETIME).value = centileThCycleTime(50);
+            currentRow.getCell(STR_CENTILE_80TH_CYCLETIME).value = centileThCycleTime(80);
+            currentRow.getCell(STR_CENTILE_50TH_LEADTIME).value = centileThLeadTime(50);
+            currentRow.getCell(STR_CENTILE_80TH_LEADTIME).value = centileThLeadTime(80);
+        });
+        
         //after filling all raw metrics, split with group row
         const fillArrayTitleRow = (grp) => {
             let grpFilled = [];
@@ -376,54 +365,7 @@ const jsontoexcel = async (json) => {
                 fgColor:{argb:groupRow[index].color},
             };
         });
-        
-        // const STR_GRP_1 = { "title":'Raw metrics', "keyStart":STR_KEY, "keyEnd":STR_CYCLETIME};
-        // const STR_GRP_2 = { "title":'Raw metrics resolved issues only', "keyStart":STR_KEY_RESOLVED, "keyEnd":STR_CENTILE_80TH_LEADTIME};
-        // const STR_GRP_3 = { "title":'Cycle time distribution', "keyStart":STR_CYCLETIMERANGE, "keyEnd":STR_CYCLETIMEDISTRIBUTION};
-        // const STR_GRP_4 = { "title":'Lead time distribution', "keyStart":STR_LEADTIMERANGE, "keyEnd":STR_LEADTIMEDISTRIBUTION};
 
-        // let grpRow = [];
-        // grpRow[sheet.getColumn(STR_GRP_1.keyStart).number] = STR_GRP_1.title;
-        // grpRow[sheet.getColumn(STR_GRP_2.keyStart).number] = STR_GRP_2.title;
-        // grpRow[sheet.getColumn(STR_GRP_3.keyStart).number] = STR_GRP_3.title;
-        // grpRow[sheet.getColumn(STR_GRP_4.keyStart).number] = STR_GRP_4.title;
-        
-        // sheet.insertRow(1,grpRow);
-        
-        // sheet.mergeCells(1,sheet.getColumn(STR_GRP_1.keyStart).number,1,sheet.getColumn(STR_GRP_1.keyEnd).number);
-        // sheet.mergeCells(1,sheet.getColumn(STR_GRP_2.keyStart).number,1,sheet.getColumn(STR_GRP_2.keyEnd).number);
-        // sheet.mergeCells(1,sheet.getColumn(STR_GRP_3.keyStart).number,1,sheet.getColumn(STR_GRP_3.keyEnd).number);
-        // sheet.mergeCells(1,sheet.getColumn(STR_GRP_4.keyStart).number,1,sheet.getColumn(STR_GRP_4.keyEnd).number);
-
-        // const cell1 = getCellForStyle(sheet,STR_GRP_1.keyStart,1);
-        // const cell2 = getCellForStyle(sheet,STR_GRP_2.keyStart,1);
-        // const cell3 = getCellForStyle(sheet,STR_GRP_3.keyStart,1);
-        // const cell4 = getCellForStyle(sheet,STR_GRP_4.keyStart,1);
-        // const centerMiddleStyle = { vertical: 'middle', horizontal: 'center' };
-        // cell1.alignment = centerMiddleStyle;
-        // cell2.alignment = centerMiddleStyle;
-        // cell3.alignment = centerMiddleStyle;
-        // cell4.alignment = centerMiddleStyle;
-        // cell1.fill = {
-        //     type: 'pattern',
-        //     pattern:'solid',
-        //     fgColor:{argb:'ccf2ff'},
-        // };
-        // cell2.fill = {
-        //     type: 'pattern',
-        //     pattern:'solid',
-        //     fgColor:{argb:'f2d9e6'},
-        // };
-        // cell3.fill = {
-        //     type: 'pattern',
-        //     pattern:'solid',
-        //     fgColor:{argb:'ccffcc'},
-        // };
-        // cell4.fill = {
-        //     type: 'pattern',
-        //     pattern:'solid',
-        //     fgColor:{argb:'ccaacc'},
-        // };
         // write to a file
         writeExcelFile(workbook);
     }
