@@ -227,7 +227,7 @@ const jsontoexcel = async (json) => {
         newRow.getCell(STR_FINALCTIME).value;
         
     }//end parsing issues
-
+    
     
     const freqCellColumnByKeyColumn = (step, cellColumn, columnKey ) => {
         let freq = {};
@@ -275,9 +275,9 @@ const jsontoexcel = async (json) => {
             currentRow.getCell(STR_LEADTIMERANGE).value = steps*stepLT;
             currentRow.getCell(STR_LEADTIMEDISTRIBUTION).value = freqLT[steps] !== undefined ? freqLT[steps]:0;
         }
-            
-        //fill Cycle time and lead time for 
-
+        
+        
+        //fill Cycle time and lead time 
         //fill Resolved issue metrics
         const resDateCol = sheet.getColumn(STR_RESODATE);
         let sortedColumns = []
@@ -293,29 +293,29 @@ const jsontoexcel = async (json) => {
                         "leadtime": sheet.getColumn(STR_LEADTIME).values[rowNumber]
                     });
                     indexResoDate = indexResoDate + 1 ;
+                }
+            });
+            
+            //sort array by resolution date and removing Too high values and too low as well
+            let filteredColumn = sortedColumns
+            .filter(a => a.cycletime > filterLowCycleTime && a.cycletime <= filterHighCycleTime)
+            .sort((a,b) => new Date(a.resolution).getTime() - new Date(b.resolution).getTime());
+            
+            //fill centile 20th | 50th | 80th of cycle time
+            const centileThCycleTime = (centileTh) => {
+            return (percentile(
+                filteredColumn
+                .map((value) => value.cycletime)
+                .sort((a,b)=> a-b), centileTh));
             }
-        });
-
-        //sort array by resolution date and removing Too high values and too low as well
-        let filteredColumn = sortedColumns
-        .filter(a => a.cycletime > filterLowCycleTime && a.cycletime <= filterHighCycleTime)
-        .sort((a,b) => new Date(a.resolution).getTime() - new Date(b.resolution).getTime());
-        
-        //fill centile 20th | 50th | 80th of cycle time
-        const centileThCycleTime = (centileTh) => {
-            return (percentile(
-                filteredColumn
-            .map((value) => value.cycletime)
-            .sort((a,b)=> a-b), centileTh));
-        }
-        //fill centile  50th | 80th of lead time
-        const centileThLeadTime = (centileTh) => {
-            return (percentile(
-                filteredColumn
+            //fill centile  50th | 80th of lead time
+            const centileThLeadTime = (centileTh) => {
+                return (percentile(
+                    filteredColumn
             .map((value) => value.leadtime)
             .sort((a,b)=> a-b), centileTh));
         }
-
+        
         filteredColumn.forEach((value,index) => {
             currentRow = sheet.getRow(index+2);
             currentRow.getCell(STR_KEY_RESOLVED).value = value.key;
