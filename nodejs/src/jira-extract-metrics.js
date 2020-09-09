@@ -56,6 +56,8 @@ const STR_CENTILE_50TH_LEADTIME="Centile 50th Lead Time"
 const STR_CENTILE_80TH_LEADTIME="Centile 80th Lead Time"
 const STR_CYCLETIMERANGE="Cycle time Range"
 const STR_CYCLETIMEDISTRIBUTION="Cycle time Distribution"
+const STR_LEADTIMERANGE="Lead time Range"
+const STR_LEADTIMEDISTRIBUTION="Lead time Distribution"
 
 const worksheetName = 'Raw_Metrics'
 
@@ -162,6 +164,8 @@ const jsontoexcel = async (json) => {
         {header: STR_CENTILE_80TH_LEADTIME, key:STR_CENTILE_80TH_LEADTIME, width: '25'},
         {header: STR_CYCLETIMERANGE, key:STR_CYCLETIMERANGE, width: '25'},
         {header: STR_CYCLETIMEDISTRIBUTION, key:STR_CYCLETIMEDISTRIBUTION, width: '25'},
+        {header: STR_LEADTIMERANGE, key:STR_LEADTIMERANGE, width: '25'},
+        {header: STR_LEADTIMEDISTRIBUTION, key:STR_LEADTIMEDISTRIBUTION, width: '25'},
     ]
     // Cross all issues retrieved from JIRA jql query
     for(let issueIdx in json.issues){
@@ -225,15 +229,10 @@ const jsontoexcel = async (json) => {
     }//end parsing issues
 
     
-    //fill Distribution
-    // const CTCol = sheet.getColumn(STR_CYCLETIME);
-    //Range to fill: 15 values, step 3
-    // const range = Array(15).fill(0).map((x,y)=>x+y*3);
-    // const freq = Array(range.length);
     const freqCellColumnByKeyColumn = (step, cellColumn, columnKey ) => {
         let freq = {};
         const CTCol = sheet.getColumn(columnKey);
-
+        
         CTCol.eachCell( (cell, rowNumber) => {
             if(cell.value !== columnKey && 
                 cell.value !== 0 &&
@@ -248,33 +247,36 @@ const jsontoexcel = async (json) => {
                         freq[rangeIdx] = 1;
                     }
                 }
-        });
-        return(freq);
-    }
-    
-    var freq = {};
+            });
+            return(freq);
+        }
+        
+    //fill Distribution Cycle time
+    var freqCT = {};
     const step = 3;
-    freq = freqCellColumnByKeyColumn(step, STR_RESODATE, STR_CYCLETIME);
+    freqCT = freqCellColumnByKeyColumn(step, STR_RESODATE, STR_CYCLETIME);
     
+    const maxKey = Math.max(...Object.keys(freqCT));
+    for(let steps = 0;steps<maxKey+2;steps++) {
+        //jump first row <=> title
+        currentRow = sheet.getRow(steps+2);
+        currentRow.getCell(STR_CYCLETIMERANGE).value = steps*step;
+        currentRow.getCell(STR_CYCLETIMEDISTRIBUTION).value = freqCT[steps] !== undefined ? freqCT[steps]:0;
+    }
+    //fill Distribution Lead time
+    var freqLT = {};
+    const stepLT = 5;
+    freqLT = freqCellColumnByKeyColumn(stepLT, STR_RESODATE, STR_LEADTIME);
     
+    const maxKeyLT = Math.max(...Object.keys(freqLT));
+    for(let steps = 0;steps<maxKeyLT+2;steps++) {
+        //jump first row <=> title
+        currentRow = sheet.getRow(steps+2);
+        currentRow.getCell(STR_LEADTIMERANGE).value = steps*stepLT;
+        currentRow.getCell(STR_LEADTIMEDISTRIBUTION).value = freqLT[steps] !== undefined ? freqLT[steps]:0;
+    }
+        
     //fill Cycle time and lead time for 
-    // CTCol.eachCell(function(cell, rowNumber) {
-    //     if(cell.value !== STR_CYCLETIME && 
-    //         cell.value !== 0 &&
-    //         sheet.getColumn(STR_RESODATE).values[rowNumber] !== undefined &&
-    //         sheet.getColumn(STR_RESODATE).values[rowNumber] !== STR_RESODATE &&
-    //         cell.value<filterHighCycleTime &&
-    //         cell.value>=filterLowCycleTime) {
-    //             let rangeIdx = Math.floor(cell/step);
-    //             if(rangeIdx in freq){
-    //                 freq[rangeIdx] = freq[rangeIdx]+1;
-    //             } else {
-    //                 freq[rangeIdx] = 1;
-    //             }
-    //     }
-    // });
-
-
 
     //fill Resolved issue metrics
     const resDateCol = sheet.getColumn(STR_RESODATE);
@@ -337,56 +339,91 @@ const jsontoexcel = async (json) => {
         currentRow.getCell(STR_CENTILE_80TH_LEADTIME).value = centile80thLeadTime;
     });
         
-    const maxKey = Math.max(...Object.keys(freq));
-    for(let steps = 0;steps<maxKey+2;steps++) {
-        //jump first row <=> title
-        currentRow = sheet.getRow(steps+2);
-        currentRow.getCell(STR_CYCLETIMERANGE).value = steps*step;
-        currentRow.getCell(STR_CYCLETIMEDISTRIBUTION).value = freq[steps] !== undefined ? freq[steps]:0;
-    }
     
         //after filling all raw metrics, split with group row
-        const STR_GRP_1 = { "title":'Raw metrics', "keyStart":STR_KEY, "keyEnd":STR_CYCLETIME};
-        const STR_GRP_2 = { "title":'Raw metrics resolved issues only', "keyStart":STR_KEY_RESOLVED, "keyEnd":STR_CENTILE_80TH_LEADTIME};
-        const STR_GRP_3 = { "title":'Cycle time distribution', "keyStart":STR_CYCLETIMERANGE, "keyEnd":STR_CYCLETIMEDISTRIBUTION};
-
-        let grpRow = [];
-        grpRow[sheet.getColumn(STR_GRP_1.keyStart).number] = STR_GRP_1.title;
-        grpRow[sheet.getColumn(STR_GRP_2.keyStart).number] = STR_GRP_2.title;
-        grpRow[sheet.getColumn(STR_GRP_3.keyStart).number] = STR_GRP_3.title;
+        const fillArrayTitleRow = (grp) => {
+            let grpFilled = [];
+            grp.forEach((grpint,index) => {
+                grpFilled[sheet.getColumn(grp[index].keyStart).number] = grp[index].title;
+            });
+            return(grpFilled)
+        };
         
-        sheet.insertRow(1,grpRow);
-        
-        sheet.mergeCells(1,sheet.getColumn(STR_GRP_1.keyStart).number,1,sheet.getColumn(STR_GRP_1.keyEnd).number);
-        sheet.mergeCells(1,sheet.getColumn(STR_GRP_2.keyStart).number,1,sheet.getColumn(STR_GRP_2.keyEnd).number);
-        sheet.mergeCells(1,sheet.getColumn(STR_GRP_3.keyStart).number,1,sheet.getColumn(STR_GRP_3.keyEnd).number);
-
+        const groupRow = [
+            { "title":'Raw metrics', "keyStart":STR_KEY, "keyEnd":STR_CYCLETIME, "color":"ccf2ff"},
+            { "title":'Raw metrics resolved issues only', "keyStart":STR_KEY_RESOLVED, "keyEnd":STR_CENTILE_80TH_LEADTIME, "color":"f2d9e6"},
+            { "title":'Cycle time distribution', "keyStart":STR_CYCLETIMERANGE, "keyEnd":STR_CYCLETIMEDISTRIBUTION, "color":"ccffcc"},
+            { "title":'Lead time distribution', "keyStart":STR_LEADTIMERANGE, "keyEnd":STR_LEADTIMEDISTRIBUTION, "color":"ccaacc"},
+        ];
         const getCellForStyle = (_sheet, _key, _rowNumber) => {
             return(_sheet.getRow(_rowNumber).getCell(_sheet.getColumn(_key).number));
-        }
-        const cell1 = getCellForStyle(sheet,STR_GRP_1.keyStart,1);
-        const cell2 = getCellForStyle(sheet,STR_GRP_2.keyStart,1);
-        const cell3 = getCellForStyle(sheet,STR_GRP_3.keyStart,1);
-        const centerMiddleStyle = { vertical: 'middle', horizontal: 'center' };
-        cell1.alignment = centerMiddleStyle;
-        cell2.alignment = centerMiddleStyle;
-        cell3.alignment = centerMiddleStyle;
-        cell1.fill = {
-            type: 'pattern',
-            pattern:'solid',
-            fgColor:{argb:'ccf2ff'},
-        };
-        cell2.fill = {
-            type: 'pattern',
-            pattern:'solid',
-            fgColor:{argb:'f2d9e6'},
-        };
-        cell3.fill = {
-            type: 'pattern',
-            pattern:'solid',
-            fgColor:{argb:'ccffcc'},
         };
 
+        let grpRowTitle = [];
+        grpRowTitle = fillArrayTitleRow(groupRow);
+        sheet.insertRow(1,grpRowTitle);
+        
+        let cellSelected = {};
+        const centerMiddleStyle = { vertical: 'middle', horizontal: 'center' };
+
+        groupRow.forEach((_,index) => {
+            sheet.mergeCells(1,sheet.getColumn(groupRow[index].keyStart).number,1,sheet.getColumn(groupRow[index].keyEnd).number);
+            cellSelected = getCellForStyle(sheet,groupRow[index].keyStart,1);
+            cellSelected.alignment = centerMiddleStyle;
+            cellSelected.fill = {
+                type: 'pattern',
+                pattern:'solid',
+                fgColor:{argb:groupRow[index].color},
+            };
+        });
+        
+        // const STR_GRP_1 = { "title":'Raw metrics', "keyStart":STR_KEY, "keyEnd":STR_CYCLETIME};
+        // const STR_GRP_2 = { "title":'Raw metrics resolved issues only', "keyStart":STR_KEY_RESOLVED, "keyEnd":STR_CENTILE_80TH_LEADTIME};
+        // const STR_GRP_3 = { "title":'Cycle time distribution', "keyStart":STR_CYCLETIMERANGE, "keyEnd":STR_CYCLETIMEDISTRIBUTION};
+        // const STR_GRP_4 = { "title":'Lead time distribution', "keyStart":STR_LEADTIMERANGE, "keyEnd":STR_LEADTIMEDISTRIBUTION};
+
+        // let grpRow = [];
+        // grpRow[sheet.getColumn(STR_GRP_1.keyStart).number] = STR_GRP_1.title;
+        // grpRow[sheet.getColumn(STR_GRP_2.keyStart).number] = STR_GRP_2.title;
+        // grpRow[sheet.getColumn(STR_GRP_3.keyStart).number] = STR_GRP_3.title;
+        // grpRow[sheet.getColumn(STR_GRP_4.keyStart).number] = STR_GRP_4.title;
+        
+        // sheet.insertRow(1,grpRow);
+        
+        // sheet.mergeCells(1,sheet.getColumn(STR_GRP_1.keyStart).number,1,sheet.getColumn(STR_GRP_1.keyEnd).number);
+        // sheet.mergeCells(1,sheet.getColumn(STR_GRP_2.keyStart).number,1,sheet.getColumn(STR_GRP_2.keyEnd).number);
+        // sheet.mergeCells(1,sheet.getColumn(STR_GRP_3.keyStart).number,1,sheet.getColumn(STR_GRP_3.keyEnd).number);
+        // sheet.mergeCells(1,sheet.getColumn(STR_GRP_4.keyStart).number,1,sheet.getColumn(STR_GRP_4.keyEnd).number);
+
+        // const cell1 = getCellForStyle(sheet,STR_GRP_1.keyStart,1);
+        // const cell2 = getCellForStyle(sheet,STR_GRP_2.keyStart,1);
+        // const cell3 = getCellForStyle(sheet,STR_GRP_3.keyStart,1);
+        // const cell4 = getCellForStyle(sheet,STR_GRP_4.keyStart,1);
+        // const centerMiddleStyle = { vertical: 'middle', horizontal: 'center' };
+        // cell1.alignment = centerMiddleStyle;
+        // cell2.alignment = centerMiddleStyle;
+        // cell3.alignment = centerMiddleStyle;
+        // cell4.alignment = centerMiddleStyle;
+        // cell1.fill = {
+        //     type: 'pattern',
+        //     pattern:'solid',
+        //     fgColor:{argb:'ccf2ff'},
+        // };
+        // cell2.fill = {
+        //     type: 'pattern',
+        //     pattern:'solid',
+        //     fgColor:{argb:'f2d9e6'},
+        // };
+        // cell3.fill = {
+        //     type: 'pattern',
+        //     pattern:'solid',
+        //     fgColor:{argb:'ccffcc'},
+        // };
+        // cell4.fill = {
+        //     type: 'pattern',
+        //     pattern:'solid',
+        //     fgColor:{argb:'ccaacc'},
+        // };
         // write to a file
         writeExcelFile(workbook);
     }
