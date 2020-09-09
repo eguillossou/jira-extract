@@ -4,7 +4,7 @@ const axios = require('axios');
 const ExcelJS = require('exceljs');
 const { query } = require('express');
 const { fill } = require('lodash');
-import percentile from 'just-percentile';
+const percentile = require('just-percentile');
 
 const TDC_JIRA_BOARD_ID = 217
 const EXCEL_FILE_NAME = "jira-report-js-full.xlsx"
@@ -52,6 +52,8 @@ const STR_CYCLETIME_RESOLVED="Cycle time resolved"
 const STR_CENTILE_20TH_CYCLETIME="Centile 20th"
 const STR_CENTILE_50TH_CYCLETIME="Centile 50th"
 const STR_CENTILE_80TH_CYCLETIME="Centile 80th"
+const STR_CENTILE_50TH_LEADTIME="Centile 50th Lead Time"
+const STR_CENTILE_80TH_LEADTIME="Centile 80th Lead Time"
 const STR_CYCLETIMERANGE="Cycle time Range"
 const STR_CYCLETIMEDISTRIBUTION="Cycle time Distribution"
 
@@ -151,11 +153,13 @@ const jsontoexcel = async (json) => {
         {header: STR_CYCLETIME, key:STR_CYCLETIME, width: '25'},
         {header: STR_KEY_RESOLVED, key:STR_KEY_RESOLVED, width: '25'},
         {header: STR_RESOLUTION_DATE_RESOLVED, key:STR_RESOLUTION_DATE_RESOLVED, width: '25'},
-        {header: STR_LEADTIME_RESOLVED, key:STR_LEADTIME_RESOLVED, width: '25'},
         {header: STR_CYCLETIME_RESOLVED, key:STR_CYCLETIME_RESOLVED, width: '25'},
         {header: STR_CENTILE_20TH_CYCLETIME, key:STR_CENTILE_20TH_CYCLETIME, width: '25'},
         {header: STR_CENTILE_50TH_CYCLETIME, key:STR_CENTILE_50TH_CYCLETIME, width: '25'},
         {header: STR_CENTILE_80TH_CYCLETIME, key:STR_CENTILE_80TH_CYCLETIME, width: '25'},
+        {header: STR_LEADTIME_RESOLVED, key:STR_LEADTIME_RESOLVED, width: '25'},
+        {header: STR_CENTILE_50TH_LEADTIME, key:STR_CENTILE_50TH_LEADTIME, width: '25'},
+        {header: STR_CENTILE_80TH_LEADTIME, key:STR_CENTILE_80TH_LEADTIME, width: '25'},
         {header: STR_CYCLETIMERANGE, key:STR_CYCLETIMERANGE, width: '25'},
         {header: STR_CYCLETIMEDISTRIBUTION, key:STR_CYCLETIMEDISTRIBUTION, width: '25'},
     ]
@@ -220,31 +224,57 @@ const jsontoexcel = async (json) => {
         
     }//end parsing issues
 
-    //fill Cycle time and lead time for 
     
     //fill Distribution
-    const CTCol = sheet.getColumn(STR_CYCLETIME);
+    // const CTCol = sheet.getColumn(STR_CYCLETIME);
     //Range to fill: 15 values, step 3
     // const range = Array(15).fill(0).map((x,y)=>x+y*3);
     // const freq = Array(range.length);
-    var freq = {}
-    const step = 3
-    
-    CTCol.eachCell(function(cell, rowNumber) {
-        if(cell.value !== STR_CYCLETIME && 
-            cell.value !== 0 &&
-            sheet.getColumn(STR_RESODATE).values[rowNumber] !== undefined &&
-            sheet.getColumn(STR_RESODATE).values[rowNumber] !== STR_RESODATE &&
-            cell.value<filterHighCycleTime &&
-            cell.value>=filterLowCycleTime) {
-                let rangeIdx = Math.floor(cell/step);
-                if(rangeIdx in freq){
-                    freq[rangeIdx] = freq[rangeIdx]+1;
-                } else {
-                    freq[rangeIdx] = 1;
+    const freqCellColumnByKeyColumn = (step, cellColumn, columnKey ) => {
+        let freq = {};
+        const CTCol = sheet.getColumn(columnKey);
+
+        CTCol.eachCell( (cell, rowNumber) => {
+            if(cell.value !== columnKey && 
+                cell.value !== 0 &&
+                sheet.getColumn(cellColumn).values[rowNumber] !== undefined &&
+                sheet.getColumn(cellColumn).values[rowNumber] !== cellColumn &&
+                cell.value<filterHighCycleTime &&
+                cell.value>=filterLowCycleTime) {
+                    let rangeIdx = Math.floor(cell/step);
+                    if(rangeIdx in freq){
+                        freq[rangeIdx] = freq[rangeIdx]+1;
+                    } else {
+                        freq[rangeIdx] = 1;
+                    }
                 }
-        }
-    });
+        });
+        return(freq);
+    }
+    
+    var freq = {};
+    const step = 3;
+    freq = freqCellColumnByKeyColumn(step, STR_RESODATE, STR_CYCLETIME);
+    
+    
+    //fill Cycle time and lead time for 
+    // CTCol.eachCell(function(cell, rowNumber) {
+    //     if(cell.value !== STR_CYCLETIME && 
+    //         cell.value !== 0 &&
+    //         sheet.getColumn(STR_RESODATE).values[rowNumber] !== undefined &&
+    //         sheet.getColumn(STR_RESODATE).values[rowNumber] !== STR_RESODATE &&
+    //         cell.value<filterHighCycleTime &&
+    //         cell.value>=filterLowCycleTime) {
+    //             let rangeIdx = Math.floor(cell/step);
+    //             if(rangeIdx in freq){
+    //                 freq[rangeIdx] = freq[rangeIdx]+1;
+    //             } else {
+    //                 freq[rangeIdx] = 1;
+    //             }
+    //     }
+    // });
+
+
 
     //fill Resolved issue metrics
     const resDateCol = sheet.getColumn(STR_RESODATE);
@@ -264,21 +294,48 @@ const jsontoexcel = async (json) => {
         }
     });
 
-    //sort array by resolution date
-    sortedColumns.sort((a,b) => new Date(a.resolution).getTime() - new Date(b.resolution).getTime());
-    sortedColumns.forEach((value,index) => {
+    //sort array by resolution date and removing Too high values and too low as well
+    let filteredColumn = sortedColumns
+    .filter(a => a.cycletime > filterLowCycleTime && a.cycletime <= filterHighCycleTime)
+    .sort((a,b) => new Date(a.resolution).getTime() - new Date(b.resolution).getTime());
+
+    filteredColumn.forEach((value,index) => {
         currentRow = sheet.getRow(index+2);
         currentRow.getCell(STR_KEY_RESOLVED).value = value.key;
         currentRow.getCell(STR_RESOLUTION_DATE_RESOLVED).value = value.resolution;
-        currentRow.getCell(STR_CYCLETIME_RESOLVED).value = (Math.round(value.cycletime * 100)/100).toFixed(2);
-        currentRow.getCell(STR_LEADTIME_RESOLVED).value = (Math.round(value.leadtime * 100)/100).toFixed(2);
+        currentRow.getCell(STR_CYCLETIME_RESOLVED).value = Number((Math.round(value.cycletime * 100)/100).toFixed(2));//.replace(/\./gi, ",");
+        currentRow.getCell(STR_LEADTIME_RESOLVED).value = Number((Math.round(value.leadtime * 100)/100).toFixed(2));//.replace(/\./gi, ",");
     });
 
     //fill centile 20th | 50th | 80th of cycle time
-    rowTwo =  sheet.getRow(index+2);
-    rowTwo.getCell(STR_CENTILE_20TH_CYCLETIME).value = ;
-    rowTwo.getCell(STR_CENTILE_20TH_CYCLETIME).value = ;
-    rowTwo.getCell(STR_CENTILE_20TH_CYCLETIME).value = ;
+    const centileThCycleTime = (centileTh) => {
+        return (percentile(
+            filteredColumn
+        .map((value) => value.cycletime)
+        .sort((a,b)=> a-b), centileTh));
+    }
+    const centile20th = centileThCycleTime(20);
+    const centile50th = centileThCycleTime(50);
+    const centile80th = centileThCycleTime(80);
+
+    //fill centile  50th | 80th of lead time
+    const centileThLeadTime = (centileTh) => {
+        return (percentile(
+            filteredColumn
+        .map((value) => value.leadtime)
+        .sort((a,b)=> a-b), centileTh));
+    }
+    const centile50thLeadTime = centileThLeadTime(50);
+    const centile80thLeadTime = centileThLeadTime(80);
+    
+    filteredColumn.forEach((value,index) => {
+        currentRow = sheet.getRow(index+2);
+        currentRow.getCell(STR_CENTILE_20TH_CYCLETIME).value = centile20th;
+        currentRow.getCell(STR_CENTILE_50TH_CYCLETIME).value = centile50th;
+        currentRow.getCell(STR_CENTILE_80TH_CYCLETIME).value = centile80th;
+        currentRow.getCell(STR_CENTILE_50TH_LEADTIME).value = centile50thLeadTime;
+        currentRow.getCell(STR_CENTILE_80TH_LEADTIME).value = centile80thLeadTime;
+    });
         
     const maxKey = Math.max(...Object.keys(freq));
     for(let steps = 0;steps<maxKey+2;steps++) {
@@ -290,7 +347,7 @@ const jsontoexcel = async (json) => {
     
         //after filling all raw metrics, split with group row
         const STR_GRP_1 = { "title":'Raw metrics', "keyStart":STR_KEY, "keyEnd":STR_CYCLETIME};
-        const STR_GRP_2 = { "title":'Raw metrics resolved issues only', "keyStart":STR_KEY_RESOLVED, "keyEnd":STR_CYCLETIME_RESOLVED};
+        const STR_GRP_2 = { "title":'Raw metrics resolved issues only', "keyStart":STR_KEY_RESOLVED, "keyEnd":STR_CENTILE_80TH_LEADTIME};
         const STR_GRP_3 = { "title":'Cycle time distribution', "keyStart":STR_CYCLETIMERANGE, "keyEnd":STR_CYCLETIMEDISTRIBUTION};
 
         let grpRow = [];
@@ -343,7 +400,7 @@ const writeExcelFile = async (workbook) => {
     }
 }
 
-function main() {
+const main = async () => {
     const { login, password } = getJIRAVariables();
     // axios.interceptors.request.use(request => {
     //     console.log('Starting Request', request)
