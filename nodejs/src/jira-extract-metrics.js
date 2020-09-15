@@ -1,12 +1,11 @@
 #!/usr/bin/env node
-const { printError,printInfo,consoleError } = require('./print');
 const axios = require('axios');
+const { printError,printInfo,consoleError } = require('./print');
 const ExcelJS = require('exceljs');
 const percentile = require('just-percentile');
 const constants = require('./constants')
-
-const TDC_JIRA_BOARD_ID = 217
-const TDC_JIRA_SPRINT_PAGINATION = 30
+const request = require('./services/rest');
+const { fill } = require('lodash');
 
 // const [ , , ...args ] = process.argv; // remove 2 first params
 
@@ -42,6 +41,7 @@ const switchDateOrTime = (transition,isDate=true) => {
         default: return(`\nWARNING: unknown transition ${isDate? "date":"time"}: ${transition}`)
     }
 }
+
 const formatDateFromDays = (nbOfDays) => {
     const nbOfRemainingDays = nbOfDays-Math.floor(nbOfDays);
     const nbHours = Math.floor(nbOfRemainingDays*24);
@@ -56,60 +56,9 @@ const formatDateFromDays = (nbOfDays) => {
     return(`${strNbays} Days ${strNbHours}:${strNbMinutes}:${strNbSec}`);
 }
 
-const jsontoexcel = async (json) => {
-    // printInfo(JSON.stringify(json.issues))
-    const workbook = new ExcelJS.Workbook();
-    const sheet = workbook.addWorksheet(constants.WORKSHEET_NAME, {views:[{state: 'frozen', xSplit: 1, ySplit:1}]});
-    sheet.columns = [
-        {header: constants.STR_KEY, key:constants.STR_KEY, width: '25'},
-        {header: constants.STR_TYPE, key:constants.STR_TYPE, width: '25'},
-        {header: constants.STR_SUMMARY, key:constants.STR_SUMMARY, width: '25'},
-        {header: constants.STR_CREATIONDATE, key:constants.STR_CREATIONDATE, width: '25', style: { numFmt: 'dd/mm/yyyy  HH:mm:ss' }},
-        {header: constants.STR_RESODATE, key:constants.STR_RESODATE, width: '25', style: { numFmt: 'dd/mm/yyyy  HH:mm:ss' }},
-        {header: constants.STR_NEWDATE, key:constants.STR_NEWDATE, width: '25', style: { numFmt: 'dd/mm/yyyy  HH:mm:ss' }},
-        {header: constants.STR_CANDIDATEDATE, key:constants.STR_CANDIDATEDATE, width: '25', style: { numFmt: 'dd/mm/yyyy  HH:mm:ss' }},
-        {header: constants.STR_ACCEPTDATE, key:constants.STR_ACCEPTDATE, width: '25', style: { numFmt: 'dd/mm/yyyy  HH:mm:ss' }},
-        {header: constants.STR_PROGRESSDATE, key:constants.STR_PROGRESSDATE, width: '25', style: { numFmt: 'dd/mm/yyyy  HH:mm:ss' }},
-        {header: constants.STR_REVIEWDATE, key:constants.STR_REVIEWDATE, width: '25', style: { numFmt: 'dd/mm/yyyy  HH:mm:ss' }},
-        {header: constants.STR_VALIDDATE, key:constants.STR_VALIDDATE, width: '25', style: { numFmt: 'dd/mm/yyyy  HH:mm:ss' }},
-        {header: constants.STR_MERGEDATE, key:constants.STR_MERGEDATE, width: '25', style: { numFmt: 'dd/mm/yyyy  HH:mm:ss' }},
-        {header: constants.STR_FINALCDATE, key:constants.STR_FINALCDATE, width: '25', style: { numFmt: 'dd/mm/yyyy  HH:mm:ss' }},
-        {header: constants.STR_DONEDATE, key:constants.STR_DONEDATE, width: '25', style: { numFmt: 'dd/mm/yyyy  HH:mm:ss' }},
-        {header: constants.STR_CLOSEDDATE, key:constants.STR_CLOSEDDATE, width: '25', style: { numFmt: 'dd/mm/yyyy  HH:mm:ss' }},
-        {header: constants.STR_ONHOLDDATE, key:constants.STR_ONHOLDDATE, width: '25', style: { numFmt: 'dd/mm/yyyy  HH:mm:ss' }},
-        {header: constants.STR_TODODATE, key:constants.STR_TODODATE, width: '25', style: { numFmt: 'dd/mm/yyyy  HH:mm:ss' }},
-        {header: constants.STR_BLOCKEDDATE, key:constants.STR_BLOCKEDDATE, width: '25', style: { numFmt: 'dd/mm/yyyy  HH:mm:ss' }},
-        {header: constants.STR_REJECTEDDATE, key:constants.STR_REJECTEDDATE, width: '25', style: { numFmt: 'dd/mm/yyyy  HH:mm:ss' }},
-        {header: constants.STR_NEWTIME, key:constants.STR_NEWTIME, width: '25'},
-        {header: constants.STR_CANDIDATETIME, key:constants.STR_CANDIDATETIME, width: '25'},
-        {header: constants.STR_ACCEPTTIME, key:constants.STR_ACCEPTTIME, width: '25'},
-        {header: constants.STR_PROGRESSTIME, key:constants.STR_PROGRESSTIME, width: '25'},
-        {header: constants.STR_REVIEWTIME, key:constants.STR_REVIEWTIME, width: '25'},
-        {header: constants.STR_VALIDTIME, key:constants.STR_VALIDTIME, width: '25'},
-        {header: constants.STR_MERGETIME, key:constants.STR_MERGETIME, width: '25'},
-        {header: constants.STR_FINALCTIME, key:constants.STR_FINALCTIME, width: '25'},
-        {header: constants.STR_DONETIME, key:constants.STR_DONETIME, width: '25'},
-        {header: constants.STR_CLOSEDTIME, key:constants.STR_CLOSEDTIME, width: '25'},
-        {header: constants.STR_BLOCKEDTIME, key:constants.STR_BLOCKEDTIME, width: '25'},
-        {header: constants.STR_REJECTEDTIME, key:constants.STR_REJECTEDTIME, width: '25'},
-        {header: constants.STR_ONHOLDTIME, key:constants.STR_ONHOLDTIME, width: '25'},
-        {header: constants.STR_TODOTIME, key:constants.STR_TODOTIME, width: '25'},
-        {header: constants.STR_LEADTIME, key:constants.STR_LEADTIME, width: '25'},
-        {header: constants.STR_CYCLETIME, key:constants.STR_CYCLETIME, width: '25'},
-        {header: constants.STR_KEY_RESOLVED, key:constants.STR_KEY_RESOLVED, width: '25'},
-        {header: constants.STR_RESOLUTION_DATE_RESOLVED, key:constants.STR_RESOLUTION_DATE_RESOLVED, width: '25'},
-        {header: constants.STR_CYCLETIME_RESOLVED, key:constants.STR_CYCLETIME_RESOLVED, width: '25'},
-        {header: constants.STR_CENTILE_20TH_CYCLETIME, key:constants.STR_CENTILE_20TH_CYCLETIME, width: '25'},
-        {header: constants.STR_CENTILE_50TH_CYCLETIME, key:constants.STR_CENTILE_50TH_CYCLETIME, width: '25'},
-        {header: constants.STR_CENTILE_80TH_CYCLETIME, key:constants.STR_CENTILE_80TH_CYCLETIME, width: '25'},
-        {header: constants.STR_LEADTIME_RESOLVED, key:constants.STR_LEADTIME_RESOLVED, width: '25'},
-        {header: constants.STR_CENTILE_50TH_LEADTIME, key:constants.STR_CENTILE_50TH_LEADTIME, width: '25'},
-        {header: constants.STR_CENTILE_80TH_LEADTIME, key:constants.STR_CENTILE_80TH_LEADTIME, width: '25'},
-        {header: constants.STR_CYCLETIMERANGE, key:constants.STR_CYCLETIMERANGE, width: '25'},
-        {header: constants.STR_CYCLETIMEDISTRIBUTION, key:constants.STR_CYCLETIMEDISTRIBUTION, width: '25'},
-        {header: constants.STR_LEADTIMERANGE, key:constants.STR_LEADTIMERANGE, width: '25'},
-        {header: constants.STR_LEADTIMEDISTRIBUTION, key:constants.STR_LEADTIMEDISTRIBUTION, width: '25'},
-    ];
+const jsontoexcel = (workbook, json) => {
+    const sheet = workbook.getWorksheet(constants.WORKSHEET_NAME);
+    
     // Cross all issues retrieved from JIRA jql query
     for(let issueIdx in json.issues){
         const issue = json.issues[issueIdx];
@@ -118,7 +67,7 @@ const jsontoexcel = async (json) => {
         const newRow = sheet.addRow(++(lastRow.number));
         newRow.getCell(constants.STR_KEY).value = issue.key;
         newRow.commit();
-        printInfo(`Analysing ${newRow.getCell(constants.STR_KEY).value} item`)
+        printInfo(`Analysing ${newRow.getCell(constants.STR_KEY).value} item`);
         
         // # Get datetime creation
         const datetime_creation = issue.fields.created ? new Date(issue.fields.created) : undefined;
@@ -272,46 +221,8 @@ const jsontoexcel = async (json) => {
             currentRow.getCell(constants.STR_CENTILE_80TH_LEADTIME).value = centileThLeadTime(80);
         });
         
-        //after filling all raw metrics, split with group row
-        const fillArrayTitleRow = (grp) => {
-            let grpFilled = [];
-            grp.forEach((grpint,index) => {
-                grpFilled[sheet.getColumn(grp[index].keyStart).number] = grp[index].title;
-            });
-            return(grpFilled)
-        };
-        
-        const groupRow = [
-            { "title":constants.STR_GRP_RAWMETRICS, "keyStart":constants.STR_KEY, "keyEnd":constants.STR_CYCLETIME, "color":"ccf2ff"},
-            { "title":constants.STR_GRP_RAWMETRICS_RESOLVED, "keyStart":constants.STR_KEY_RESOLVED, "keyEnd":constants.STR_CENTILE_80TH_LEADTIME, "color":"f2d9e6"},
-            { "title":constants.STR_GRP_CYCLETIME_DISTRIBUTION, "keyStart":constants.STR_CYCLETIMERANGE, "keyEnd":constants.STR_CYCLETIMEDISTRIBUTION, "color":"ccffcc"},
-            { "title":constants.STR_GRP_LEADTIME_DISTRIBUTION, "keyStart":constants.STR_LEADTIMERANGE, "keyEnd":constants.STR_LEADTIMEDISTRIBUTION, "color":"ccaacc"},
-        ];
-        const getCellForStyle = (_sheet, _key, _rowNumber) => {
-            return(_sheet.getRow(_rowNumber).getCell(_sheet.getColumn(_key).number));
-        };
-
-        let grpRowTitle = [];
-        grpRowTitle = fillArrayTitleRow(groupRow);
-        sheet.insertRow(1,grpRowTitle);
-        
-        let cellSelected = {};
-        const centerMiddleStyle = { vertical: 'middle', horizontal: 'center' };
-
-        groupRow.forEach((_,index) => {
-            sheet.mergeCells(1,sheet.getColumn(groupRow[index].keyStart).number,1,sheet.getColumn(groupRow[index].keyEnd).number);
-            cellSelected = getCellForStyle(sheet,groupRow[index].keyStart,1);
-            cellSelected.alignment = centerMiddleStyle;
-            cellSelected.fill = {
-                type: 'pattern',
-                pattern:'solid',
-                fgColor:{argb:groupRow[index].color},
-            };
-        });
-
-        // write to a file
-        writeExcelFile(workbook);
-    }
+    groupRows(workbook);
+}
 
 const writeExcelFile = async (workbook) => {
     try {
@@ -321,14 +232,136 @@ const writeExcelFile = async (workbook) => {
         consoleError(error);
     }
 }
+const fillRowValue = (rowObject, column, value ) => {
+    rowObject.getCell(column).value = value;
+}
 
-const main = async () => {
+const parseSprints = (workbook, json) => {
+    const sheet = workbook.getWorksheet(constants.WORKSHEET_NAME);
+    // getting first row to fill (remove group row and header row)
+    let indexRow = 3;
+    const filterSprints = json.sprints.filter((sprint) => 
+    sprint.name.includes(constants.STR_EXP_FILTER_SPRINT) && 
+    ( sprint.state.includes("CLOSED") || sprint.state.includes("ACTIVE")));
+    const lastTenSprints = filterSprints.filter((_, idx) => idx >filterSprints.length-11);
+    for(let sprintNb in lastTenSprints) {
+        let rowObject = sheet.getRow(indexRow);
+        fillRowValue(rowObject, constants.STR_SPRINT_ID, lastTenSprints[sprintNb].id );
+        fillRowValue(rowObject, constants.STR_SPRINT_NAME, lastTenSprints[sprintNb].name );
+        indexRow = indexRow + 1;
+    }
+}
+const initExcel = (workbook) => {
+    const sheet = workbook.addWorksheet(constants.WORKSHEET_NAME, {views:[{state: 'frozen', xSplit: 1, ySplit:1}]});
+    sheet.columns = [
+        {header: constants.STR_KEY, key:constants.STR_KEY, width: '25'},
+        {header: constants.STR_TYPE, key:constants.STR_TYPE, width: '25'},
+        {header: constants.STR_SUMMARY, key:constants.STR_SUMMARY, width: '25'},
+        {header: constants.STR_CREATIONDATE, key:constants.STR_CREATIONDATE, width: '25', style: { numFmt: 'dd/mm/yyyy  HH:mm:ss' }},
+        {header: constants.STR_RESODATE, key:constants.STR_RESODATE, width: '25', style: { numFmt: 'dd/mm/yyyy  HH:mm:ss' }},
+        {header: constants.STR_NEWDATE, key:constants.STR_NEWDATE, width: '25', style: { numFmt: 'dd/mm/yyyy  HH:mm:ss' }},
+        {header: constants.STR_CANDIDATEDATE, key:constants.STR_CANDIDATEDATE, width: '25', style: { numFmt: 'dd/mm/yyyy  HH:mm:ss' }},
+        {header: constants.STR_ACCEPTDATE, key:constants.STR_ACCEPTDATE, width: '25', style: { numFmt: 'dd/mm/yyyy  HH:mm:ss' }},
+        {header: constants.STR_PROGRESSDATE, key:constants.STR_PROGRESSDATE, width: '25', style: { numFmt: 'dd/mm/yyyy  HH:mm:ss' }},
+        {header: constants.STR_REVIEWDATE, key:constants.STR_REVIEWDATE, width: '25', style: { numFmt: 'dd/mm/yyyy  HH:mm:ss' }},
+        {header: constants.STR_VALIDDATE, key:constants.STR_VALIDDATE, width: '25', style: { numFmt: 'dd/mm/yyyy  HH:mm:ss' }},
+        {header: constants.STR_MERGEDATE, key:constants.STR_MERGEDATE, width: '25', style: { numFmt: 'dd/mm/yyyy  HH:mm:ss' }},
+        {header: constants.STR_FINALCDATE, key:constants.STR_FINALCDATE, width: '25', style: { numFmt: 'dd/mm/yyyy  HH:mm:ss' }},
+        {header: constants.STR_DONEDATE, key:constants.STR_DONEDATE, width: '25', style: { numFmt: 'dd/mm/yyyy  HH:mm:ss' }},
+        {header: constants.STR_CLOSEDDATE, key:constants.STR_CLOSEDDATE, width: '25', style: { numFmt: 'dd/mm/yyyy  HH:mm:ss' }},
+        {header: constants.STR_ONHOLDDATE, key:constants.STR_ONHOLDDATE, width: '25', style: { numFmt: 'dd/mm/yyyy  HH:mm:ss' }},
+        {header: constants.STR_TODODATE, key:constants.STR_TODODATE, width: '25', style: { numFmt: 'dd/mm/yyyy  HH:mm:ss' }},
+        {header: constants.STR_BLOCKEDDATE, key:constants.STR_BLOCKEDDATE, width: '25', style: { numFmt: 'dd/mm/yyyy  HH:mm:ss' }},
+        {header: constants.STR_REJECTEDDATE, key:constants.STR_REJECTEDDATE, width: '25', style: { numFmt: 'dd/mm/yyyy  HH:mm:ss' }},
+        {header: constants.STR_NEWTIME, key:constants.STR_NEWTIME, width: '25'},
+        {header: constants.STR_CANDIDATETIME, key:constants.STR_CANDIDATETIME, width: '25'},
+        {header: constants.STR_ACCEPTTIME, key:constants.STR_ACCEPTTIME, width: '25'},
+        {header: constants.STR_PROGRESSTIME, key:constants.STR_PROGRESSTIME, width: '25'},
+        {header: constants.STR_REVIEWTIME, key:constants.STR_REVIEWTIME, width: '25'},
+        {header: constants.STR_VALIDTIME, key:constants.STR_VALIDTIME, width: '25'},
+        {header: constants.STR_MERGETIME, key:constants.STR_MERGETIME, width: '25'},
+        {header: constants.STR_FINALCTIME, key:constants.STR_FINALCTIME, width: '25'},
+        {header: constants.STR_DONETIME, key:constants.STR_DONETIME, width: '25'},
+        {header: constants.STR_CLOSEDTIME, key:constants.STR_CLOSEDTIME, width: '25'},
+        {header: constants.STR_BLOCKEDTIME, key:constants.STR_BLOCKEDTIME, width: '25'},
+        {header: constants.STR_REJECTEDTIME, key:constants.STR_REJECTEDTIME, width: '25'},
+        {header: constants.STR_ONHOLDTIME, key:constants.STR_ONHOLDTIME, width: '25'},
+        {header: constants.STR_TODOTIME, key:constants.STR_TODOTIME, width: '25'},
+        {header: constants.STR_LEADTIME, key:constants.STR_LEADTIME, width: '25'},
+        {header: constants.STR_CYCLETIME, key:constants.STR_CYCLETIME, width: '25'},
+        {header: constants.STR_KEY_RESOLVED, key:constants.STR_KEY_RESOLVED, width: '25'},
+        {header: constants.STR_RESOLUTION_DATE_RESOLVED, key:constants.STR_RESOLUTION_DATE_RESOLVED, width: '25'},
+        {header: constants.STR_CYCLETIME_RESOLVED, key:constants.STR_CYCLETIME_RESOLVED, width: '25'},
+        {header: constants.STR_CENTILE_20TH_CYCLETIME, key:constants.STR_CENTILE_20TH_CYCLETIME, width: '25'},
+        {header: constants.STR_CENTILE_50TH_CYCLETIME, key:constants.STR_CENTILE_50TH_CYCLETIME, width: '25'},
+        {header: constants.STR_CENTILE_80TH_CYCLETIME, key:constants.STR_CENTILE_80TH_CYCLETIME, width: '25'},
+        {header: constants.STR_LEADTIME_RESOLVED, key:constants.STR_LEADTIME_RESOLVED, width: '25'},
+        {header: constants.STR_CENTILE_50TH_LEADTIME, key:constants.STR_CENTILE_50TH_LEADTIME, width: '25'},
+        {header: constants.STR_CENTILE_80TH_LEADTIME, key:constants.STR_CENTILE_80TH_LEADTIME, width: '25'},
+        {header: constants.STR_CYCLETIMERANGE, key:constants.STR_CYCLETIMERANGE, width: '25'},
+        {header: constants.STR_CYCLETIMEDISTRIBUTION, key:constants.STR_CYCLETIMEDISTRIBUTION, width: '25'},
+        {header: constants.STR_LEADTIMERANGE, key:constants.STR_LEADTIMERANGE, width: '25'},
+        {header: constants.STR_LEADTIMEDISTRIBUTION, key:constants.STR_LEADTIMEDISTRIBUTION, width: '25'},
+        {header: constants.STR_SPRINT_ID, key:constants.STR_SPRINT_ID, width: '25'},
+        {header: constants.STR_SPRINT_NAME, key:constants.STR_SPRINT_NAME, width: '25'},
+    ];
+    return(workbook);
+}
+const groupRows = (workbook) => {
+    const sheet = workbook.getWorksheet(constants.WORKSHEET_NAME);
+    //after filling all raw metrics, split with group row
+    const fillArrayTitleRow = (grp) => {
+        let grpFilled = [];
+        grp.forEach((grpint,index) => {
+            grpFilled[sheet.getColumn(grp[index].keyStart).number] = grp[index].title;
+        });
+        return(grpFilled)
+    };
+
+    const groupRow = [
+        { "title":constants.STR_GRP_RAWMETRICS, "keyStart":constants.STR_KEY, "keyEnd":constants.STR_CYCLETIME, "color":"ccf2ff"},
+        { "title":constants.STR_GRP_RAWMETRICS_RESOLVED, "keyStart":constants.STR_KEY_RESOLVED, "keyEnd":constants.STR_CENTILE_80TH_LEADTIME, "color":"f2d9e6"},
+        { "title":constants.STR_GRP_CYCLETIME_DISTRIBUTION, "keyStart":constants.STR_CYCLETIMERANGE, "keyEnd":constants.STR_CYCLETIMEDISTRIBUTION, "color":"ccffcc"},
+        { "title":constants.STR_GRP_LEADTIME_DISTRIBUTION, "keyStart":constants.STR_LEADTIMERANGE, "keyEnd":constants.STR_LEADTIMEDISTRIBUTION, "color":"ccaacc"},
+    ];
+    const getCellForStyle = (_sheet, _key, _rowNumber) => {
+        return(_sheet.getRow(_rowNumber).getCell(_sheet.getColumn(_key).number));
+    };
+
+    let grpRowTitle = [];
+    grpRowTitle = fillArrayTitleRow(groupRow);
+    sheet.insertRow(1,grpRowTitle);
+
+    let cellSelected = {};
+    const centerMiddleStyle = { vertical: 'middle', horizontal: 'center' };
+
+    groupRow.forEach((_,index) => {
+        sheet.mergeCells(1,sheet.getColumn(groupRow[index].keyStart).number,1,sheet.getColumn(groupRow[index].keyEnd).number);
+        cellSelected = getCellForStyle(sheet,groupRow[index].keyStart,1);
+        cellSelected.alignment = centerMiddleStyle;
+        cellSelected.fill = {
+            type: 'pattern',
+            pattern:'solid',
+            fgColor:{argb:groupRow[index].color},
+        };
+    });
+}
+
+const main = () => {
     const { login, password } = getJIRAVariables();
     // axios.interceptors.request.use(request => {
     //     console.log('Starting Request', request)
     //     return request
     //   })
 
+    const workbook = initExcel(new ExcelJS.Workbook());
+
+    // const resGetAllIssues = await request.getAllIssues(login,password);
+    // promiseGetAllIssues.then(
+    //     function (response) {
+    // jsontoexcel(workbook,resGetAllIssues);
+    //     }
+    // );
     axios({
         method: 'get',
         withCredentials: true,
@@ -349,15 +382,75 @@ const main = async () => {
         },
     }).then(function (response) {
         try {
-            jsontoexcel(response.data);
+        jsontoexcel(workbook,response.data);
         } catch(error) {
             consoleError(error);
         }
     })
     .catch(function (error) {
         consoleError(error);
+    }).then( () => {
+        axios({
+            method: 'get',
+            withCredentials: true,
+            headers: {
+                "Accept": "application/json",
+                "Content-Type": "application/json"
+            },
+            params: {
+                "includeFutureSprints":true,
+                "includeHistoricSprints":false
+            },
+            url: `${constants.JIRA_GREENHOPER_URL}/${constants.TDC_JIRA_BOARD_ID}`,
+            auth: {
+                username: login,
+                password: password
+            },
+        }).then(function (response) {
+            try {
+                parseSprints(workbook,response.data);
+            } catch(error) {
+                consoleError(error);
+            }
+        }).catch(function (error) {
+            consoleError(error);
+        }).then( () =>
+            writeExcelFile(workbook)
+        )
     });
 
+    // jsonGetAllIssues.then(
+    //     axios({
+    //     method: 'get',
+    //     withCredentials: true,
+    //     headers: {
+    //         "Accept": "application/json",
+    //         "Content-Type": "application/json"
+    //     },
+    //     params: {
+    //         "includeFutureSprints":true,
+    //         "includeHistoricSprints":false
+    //     },
+    //     url: `${constants.JIRA_GREENHOPER_URL}/${constants.TDC_JIRA_BOARD_ID}`,
+    //     auth: {
+    //         username: login,
+    //         password: password
+    //     },
+    // }).then(function (response) {
+    //     try {
+    //         sprintmetrics(workbook,response.data);
+    //     } catch(error) {
+    //         consoleError(error);
+    //     }
+    // })
+    // .catch(function (error) {
+    //     consoleError(error);
+    // })
+    // // write to a file
+    // )
+    // .then( () =>
+    // writeExcelFile(workbook);
+    
 }
 
 main();

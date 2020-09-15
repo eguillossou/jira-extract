@@ -7,7 +7,9 @@ function define(name, value) {
 
 define("TDC_JIRA_BOARD_ID",217);
 define("JIRA_URL","https://jira.talendforge.org/rest/api/2/search");
+define("JIRA_GREENHOPER_URL",`https://jira.talendforge.org/rest/greenhopper/1.0/sprintquery`);
 define("JIRA_QUERY","project = TDC AND issuetype in (Bug, \"New Feature\", \"Work Item\") AND Sprint in (\"TDC Sprint 48\",\"TDC Sprint 49\",\"TDC Sprint 50\") ORDER BY labels ASC, RANK");
+define("JIRA_QUERY_SPRINTS","project = TDC AND sprint in (closedSprints(),futureSprints(),openSprints())");
 define("TDC_JIRA_SPRINT_PAGINATION",30);
 
 define("EXCEL_FILE_NAME","jira-report-js-full.xlsx");
@@ -61,6 +63,15 @@ define("STR_CYCLETIMEDISTRIBUTION","Cycle time Distribution");
 define("STR_LEADTIMERANGE","Lead time Range");
 define("STR_LEADTIMEDISTRIBUTION","Lead time Distribution");
 
+define("STR_SPRINT_ID","Sprint id");
+define("STR_SPRINT_NAME","Sprint name");
+define("STR_SPRINT_STARTDATE","Sprint start date");
+define("STR_SPRINT_ENDDATE","Sprint end date");
+define("STR_SPRINT_ENDMONTH","Sprint end month");
+define("STR_SPRINT_ENDWEEK","Sprint end week");
+define("STR_SPRINT_NBCOMPLETEDISSUES","Sprint completed issues");
+define("STR_SPRINT_NBINCOMPLETEDISSUES","Sprint incompleted issues");
+
 define("STR_GRP_RAWMETRICS","Raw metrics")
 define("STR_GRP_RAWMETRICS_RESOLVED","Raw metrics resolved issues only")
 define("STR_GRP_CYCLETIME_DISTRIBUTION","Cycle time distribution")
@@ -71,3 +82,4 @@ define("WORKSHEET_NAME",'Raw_Metrics');
 define("FILTER_LOW_CYCLETIME",0.05);
 define("FILTER_HIGH_CYCLETIME",90);
 
+define("STR_EXP_FILTER_SPRINT","TDC Sprint");
