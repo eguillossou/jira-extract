@@ -346,7 +346,24 @@ const groupRows = (workbook) => {
         };
     });
 }
-
+const getAxiosConfig = (url, login, password, params ) => {
+    return(
+        {        
+            "method": 'get',
+            "withCredentials": true,
+            "headers": {
+                "Accept": "application/json",
+                "Content-Type": "application/json"
+            },
+            "url": url,
+            "auth": {
+                "username": login,
+                "password": password
+            },
+            ...params
+        }
+    )
+}
 const main = () => {
     const { login, password } = getJIRAVariables();
     // axios.interceptors.request.use(request => {
@@ -355,6 +372,22 @@ const main = () => {
     //   })
 
     const workbook = initExcel(new ExcelJS.Workbook());
+    const paramAxiosIssues = 
+    {    
+        "params": {
+        "expand":"changelog", // only accessible through get request and not in post jira api
+        "jql": constants.JIRA_QUERY,
+        "startAt":0,
+        "maxResults":500,
+        }
+    };
+    const paramAxiosSprints = 
+    {    
+        "params": {
+            "includeFutureSprints":true,
+            "includeHistoricSprints":false
+        }
+    };
 
     // const resGetAllIssues = await request.getAllIssues(login,password);
     // promiseGetAllIssues.then(
@@ -362,25 +395,8 @@ const main = () => {
     // jsontoexcel(workbook,resGetAllIssues);
     //     }
     // );
-    axios({
-        method: 'get',
-        withCredentials: true,
-        headers: {
-            "Accept": "application/json",
-            "Content-Type": "application/json"
-        },
-        params: {
-            "expand":"changelog", // only accessible through get request and not in post jira api
-            "jql": constants.JIRA_QUERY,
-            "startAt":0,
-            "maxResults":500,
-        },
-        url: `${constants.JIRA_URL}`,
-        auth: {
-            username: login,
-            password: password
-        },
-    }).then(function (response) {
+    axios(getAxiosConfig(constants.JIRA_URL,login, password, paramAxiosIssues))
+    .then(function (response) {
         try {
         jsontoexcel(workbook,response.data);
         } catch(error) {
@@ -389,24 +405,10 @@ const main = () => {
     })
     .catch(function (error) {
         consoleError(error);
-    }).then( () => {
-        axios({
-            method: 'get',
-            withCredentials: true,
-            headers: {
-                "Accept": "application/json",
-                "Content-Type": "application/json"
-            },
-            params: {
-                "includeFutureSprints":true,
-                "includeHistoricSprints":false
-            },
-            url: `${constants.JIRA_GREENHOPER_URL}/${constants.TDC_JIRA_BOARD_ID}`,
-            auth: {
-                username: login,
-                password: password
-            },
-        }).then(function (response) {
+    })
+    .then( () => {
+        axios(getAxiosConfig(`${constants.JIRA_GREENHOPER_URL}/${constants.TDC_JIRA_BOARD_ID}`,login, password, paramAxiosSprints))
+        .then(function (response) {
             try {
                 parseSprints(workbook,response.data);
             } catch(error) {
@@ -414,9 +416,7 @@ const main = () => {
             }
         }).catch(function (error) {
             consoleError(error);
-        }).then( () =>
-            writeExcelFile(workbook)
-        )
+        }).then( () =>  writeExcelFile(workbook))
     });
 
     // jsonGetAllIssues.then(
