@@ -389,12 +389,6 @@ const main = () => {
         }
     };
 
-    // const resGetAllIssues = await request.getAllIssues(login,password);
-    // promiseGetAllIssues.then(
-    //     function (response) {
-    // jsontoexcel(workbook,resGetAllIssues);
-    //     }
-    // );
     axios(getAxiosConfig(constants.JIRA_URL,login, password, paramAxiosIssues))
     .then(function (response) {
         try {
@@ -419,38 +413,6 @@ const main = () => {
         }).then( () =>  writeExcelFile(workbook))
     });
 
-    // jsonGetAllIssues.then(
-    //     axios({
-    //     method: 'get',
-    //     withCredentials: true,
-    //     headers: {
-    //         "Accept": "application/json",
-    //         "Content-Type": "application/json"
-    //     },
-    //     params: {
-    //         "includeFutureSprints":true,
-    //         "includeHistoricSprints":false
-    //     },
-    //     url: `${constants.JIRA_GREENHOPER_URL}/${constants.TDC_JIRA_BOARD_ID}`,
-    //     auth: {
-    //         username: login,
-    //         password: password
-    //     },
-    // }).then(function (response) {
-    //     try {
-    //         sprintmetrics(workbook,response.data);
-    //     } catch(error) {
-    //         consoleError(error);
-    //     }
-    // })
-    // .catch(function (error) {
-    //     consoleError(error);
-    // })
-    // // write to a file
-    // )
-    // .then( () =>
-    // writeExcelFile(workbook);
-    
 }
 
 main();
