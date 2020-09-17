@@ -6,6 +6,8 @@ const percentile = require('just-percentile');
 const constants = require('./constants')
 const request = require('./services/rest');
 const { fill } = require('lodash');
+const fs = require('fs');
+const path = require('path');
 
 // const [ , , ...args ] = process.argv; // remove 2 first params
 
@@ -221,24 +223,24 @@ const jsontoexcel = (workbook, json) => {
             currentRow.getCell(constants.STR_CENTILE_80TH_LEADTIME).value = centileThLeadTime(80);
         });
         
-    groupRows(workbook);
-}
-
-const writeExcelFile = async (workbook) => {
-    try {
+    }
+    
+    const writeExcelFile = async (workbook) => {
+        try {
         await workbook.xlsx.writeFile(constants.EXCEL_FILE_NAME);
     }
     catch (error) {
         consoleError(error);
     }
 }
-const fillRowValue = (rowObject, column, value ) => {
+const fillRowValueInExcel = (rowObject, column, value ) => {
     rowObject.getCell(column).value = value;
 }
 
 const parseSprints = (workbook, json) => {
     const sheet = workbook.getWorksheet(constants.WORKSHEET_NAME);
     // getting first row to fill (remove group row and header row)
+    const arrSprint = [];
     let indexRow = 3;
     const filterSprints = json.sprints.filter((sprint) => 
     sprint.name.includes(constants.STR_EXP_FILTER_SPRINT) && 
@@ -246,12 +248,17 @@ const parseSprints = (workbook, json) => {
     const lastTenSprints = filterSprints.filter((_, idx) => idx >filterSprints.length-11);
     for(let sprintNb in lastTenSprints) {
         let rowObject = sheet.getRow(indexRow);
-        fillRowValue(rowObject, constants.STR_SPRINT_ID, lastTenSprints[sprintNb].id );
-        fillRowValue(rowObject, constants.STR_SPRINT_NAME, lastTenSprints[sprintNb].name );
+        fillRowValueInExcel(rowObject, constants.STR_SPRINT_ID, lastTenSprints[sprintNb].id );
+        fillRowValueInExcel(rowObject, constants.STR_SPRINT_NAME, lastTenSprints[sprintNb].name );
+        arrSprint[sprintNb] = {
+            "id": lastTenSprints[sprintNb].id,
+            "name":lastTenSprints[sprintNb].name
+        };
         indexRow = indexRow + 1;
     }
+    return(arrSprint);
 }
-const initExcel = (workbook) => {
+const initExcelFile = (workbook) => {
     const sheet = workbook.addWorksheet(constants.WORKSHEET_NAME, {views:[{state: 'frozen', xSplit: 1, ySplit:1}]});
     sheet.columns = [
         {header: constants.STR_KEY, key:constants.STR_KEY, width: '25'},
@@ -304,6 +311,9 @@ const initExcel = (workbook) => {
         {header: constants.STR_LEADTIMEDISTRIBUTION, key:constants.STR_LEADTIMEDISTRIBUTION, width: '25'},
         {header: constants.STR_SPRINT_ID, key:constants.STR_SPRINT_ID, width: '25'},
         {header: constants.STR_SPRINT_NAME, key:constants.STR_SPRINT_NAME, width: '25'},
+        {header: constants.STR_SPRINT_STARTDATE, key:constants.STR_SPRINT_STARTDATE, width: '25'},
+        {header: constants.STR_SPRINT_ENDDATE, key:constants.STR_SPRINT_ENDDATE, width: '25'},
+        {header: constants.STR_SPRINT_COMPLETEDATE, key:constants.STR_SPRINT_COMPLETEDATE, width: '25'},
     ];
     return(workbook);
 }
@@ -323,18 +333,19 @@ const groupRows = (workbook) => {
         { "title":constants.STR_GRP_RAWMETRICS_RESOLVED, "keyStart":constants.STR_KEY_RESOLVED, "keyEnd":constants.STR_CENTILE_80TH_LEADTIME, "color":"f2d9e6"},
         { "title":constants.STR_GRP_CYCLETIME_DISTRIBUTION, "keyStart":constants.STR_CYCLETIMERANGE, "keyEnd":constants.STR_CYCLETIMEDISTRIBUTION, "color":"ccffcc"},
         { "title":constants.STR_GRP_LEADTIME_DISTRIBUTION, "keyStart":constants.STR_LEADTIMERANGE, "keyEnd":constants.STR_LEADTIMEDISTRIBUTION, "color":"ccaacc"},
+        { "title":constants.STR_GRP_SPRINT, "keyStart":constants.STR_SPRINT_ID, "keyEnd":constants.STR_SPRINT_COMPLETEDATE, "color":"ccaaff"},
     ];
     const getCellForStyle = (_sheet, _key, _rowNumber) => {
         return(_sheet.getRow(_rowNumber).getCell(_sheet.getColumn(_key).number));
     };
-
+    
     let grpRowTitle = [];
     grpRowTitle = fillArrayTitleRow(groupRow);
     sheet.insertRow(1,grpRowTitle);
-
+    
     let cellSelected = {};
     const centerMiddleStyle = { vertical: 'middle', horizontal: 'center' };
-
+    
     groupRow.forEach((_,index) => {
         sheet.mergeCells(1,sheet.getColumn(groupRow[index].keyStart).number,1,sheet.getColumn(groupRow[index].keyEnd).number);
         cellSelected = getCellForStyle(sheet,groupRow[index].keyStart,1);
@@ -364,22 +375,36 @@ const getAxiosConfig = (url, login, password, params ) => {
         }
     )
 }
-const main = () => {
+
+const fillExcelWithSprintsDetails = (workbook, sprintDetails) => {
+    const sheet = workbook.getWorksheet(constants.WORKSHEET_NAME);
+    let item = {};
+    sheet.getColumn(constants.STR_SPRINT_ID).values.forEach( (value, index) => {
+        item = sprintDetails.filter(v => v.id === value);
+        if( (item !== undefined && item.length >0) ) {
+            let rowObject = sheet.getRow(index);
+            fillRowValueInExcel(rowObject, constants.STR_SPRINT_STARTDATE, item[0].startDate );
+            fillRowValueInExcel(rowObject, constants.STR_SPRINT_ENDDATE, item[0].endDate );
+            fillRowValueInExcel(rowObject, constants.STR_SPRINT_COMPLETEDATE, item[0].completeDate );
+        }
+    });
+}
+const main = async () => {
     const { login, password } = getJIRAVariables();
     // axios.interceptors.request.use(request => {
-    //     console.log('Starting Request', request)
-    //     return request
-    //   })
-
-    const workbook = initExcel(new ExcelJS.Workbook());
-    const paramAxiosIssues = 
-    {    
-        "params": {
-        "expand":"changelog", // only accessible through get request and not in post jira api
-        "jql": constants.JIRA_QUERY,
-        "startAt":0,
-        "maxResults":500,
-        }
+        //     console.log('Starting Request', request)
+        //     return request
+        //   })
+        
+        const workbook = initExcelFile(new ExcelJS.Workbook());
+        const paramAxiosIssues = 
+        {    
+            "params": {
+                "expand":"changelog", // only accessible through get request and not in post jira api
+                "jql": constants.JIRA_QUERY,
+                "startAt":0,
+                "maxResults":500,
+            }
     };
     const paramAxiosSprints = 
     {    
@@ -388,31 +413,32 @@ const main = () => {
             "includeHistoricSprints":false
         }
     };
-
-    axios(getAxiosConfig(constants.JIRA_URL,login, password, paramAxiosIssues))
-    .then(function (response) {
-        try {
-        jsontoexcel(workbook,response.data);
-        } catch(error) {
-            consoleError(error);
-        }
-    })
-    .catch(function (error) {
-        consoleError(error);
-    })
-    .then( () => {
-        axios(getAxiosConfig(`${constants.JIRA_GREENHOPER_URL}/${constants.TDC_JIRA_BOARD_ID}`,login, password, paramAxiosSprints))
-        .then(function (response) {
-            try {
-                parseSprints(workbook,response.data);
-            } catch(error) {
-                consoleError(error);
+    
+    try {
+        // const jsonIssues = await axios(getAxiosConfig(constants.JIRA_URL,login, password, paramAxiosIssues));
+        // const jsonSprints = await axios(getAxiosConfig(`${constants.JIRA_GREENHOPER_URL}/${constants.TDC_JIRA_BOARD_ID}`,login, password, paramAxiosSprints));
+        
+        // working locally to avoid calls to http
+        const jsonIssues = { "data": JSON.parse(fs.readFileSync(path.join(__dirname,'resIssues.json'), 'utf8'))}
+        const jsonSprints = { "data": JSON.parse(fs.readFileSync(path.join(__dirname,'resSprints.json'), 'utf8'))}
+        const jsonSprintId = { "data": JSON.parse(fs.readFileSync(path.join(__dirname,'resSprintId1772.json'), 'utf8'))}
+        jsontoexcel(workbook,jsonIssues.data);
+        const arrSprint = parseSprints(workbook,jsonSprints.data);
+        let jsonSprintDetails = []
+        let jsonSprintDetail = {}
+        for(const value of arrSprint) {
+            if(value.id !== undefined) {
+                // jsonSprintDetail = await axios(getAxiosConfig(`${constants.JIRA_URL_SPRINT_BY_ID}/${value.id}`,login, password, {}));
+                jsonSprintDetail = jsonSprintId;
+                jsonSprintDetails.push(jsonSprintDetail.data);
             }
-        }).catch(function (error) {
-            consoleError(error);
-        }).then( () =>  writeExcelFile(workbook))
-    });
-
+        };
+        fillExcelWithSprintsDetails(workbook,jsonSprintDetails);
+        groupRows(workbook);
+        writeExcelFile(workbook);
+    } catch (error) {
+        consoleError(error);
+    }
 }
 
 main();

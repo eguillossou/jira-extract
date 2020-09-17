@@ -1,0 +1,11 @@
+{
+"id": 1772,
+"self": "https://jira.talendforge.org/rest/agile/1.0/sprint/1772",
+"state": "closed",
+"name": "TDC Sprint 50",
+"startDate": "2020-08-24T17:30:59.324-05:00",
+"endDate": "2020-09-10T07:54:00.000-05:00",
+"completeDate": "2020-09-10T06:31:17.312-05:00",
+"originBoardId": 217,
+"goal": "[Aug 25, Sep 10] Trustscore V2, Trustscore Dataviz"
+}
