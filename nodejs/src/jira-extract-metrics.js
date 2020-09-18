@@ -4,7 +4,7 @@ const { printError,printInfo,consoleError } = require('./print');
 const ExcelJS = require('exceljs');
 const percentile = require('just-percentile');
 const constants = require('./constants')
-const request = require('./services/rest');
+const rest = require('./services/rest');
 const { fill } = require('lodash');
 const fs = require('fs');
 const path = require('path');
@@ -60,6 +60,7 @@ const formatDateFromDays = (nbOfDays) => {
 
 const jsontoexcel = (workbook, json) => {
     const sheet = workbook.getWorksheet(constants.WORKSHEET_NAME);
+    const internalArray = [];
     
     // Cross all issues retrieved from JIRA jql query
     for(let issueIdx in json.issues){
@@ -70,12 +71,18 @@ const jsontoexcel = (workbook, json) => {
         newRow.getCell(constants.STR_KEY).value = issue.key;
         newRow.commit();
         printInfo(`Analysing ${newRow.getCell(constants.STR_KEY).value} item`);
+        const issueObject = {};
+
+        issueObject.key = issue.key;
         
         // # Get datetime creation
         const datetime_creation = issue.fields.created ? new Date(issue.fields.created) : undefined;
         if(datetime_creation !== undefined) {
             newRow.getCell(constants.STR_CREATIONDATE).value = datetime_creation.toLocaleString("fr-FR",{day:"numeric",month:"numeric",year:"numeric"});
             newRow.getCell(constants.STR_NEWDATE).value = datetime_creation.toLocaleString();
+
+            issueObject.creation_date = datetime_creation.toLocaleString("fr-FR",{day:"numeric",month:"numeric",year:"numeric"});
+            issueObject.new_date = datetime_creation.toLocaleString();
         }
         
         // # Get datetime resolution
@@ -85,10 +92,16 @@ const jsontoexcel = (workbook, json) => {
             const nbOfDays = (datetime_resolution.getTime()-datetime_creation.getTime()) / (1000*60*60*24)
             // newRow.getCell(constants.STR_LEADTIME).value = formatDateFromDays(nbOfDays);
             newRow.getCell(constants.STR_LEADTIME).value = nbOfDays;
+
+            issueObject.reso_date = datetime_resolution.toLocaleString("fr-FR",{day:"numeric",month:"numeric",year:"numeric"});
+            issueObject.lead_time = nbOfDays;
         }
         
         newRow.getCell(constants.STR_TYPE).value = issue.fields.issuetype.name;
         newRow.getCell(constants.STR_SUMMARY).value = issue.fields.summary;
+
+        issueObject.type = issue.fields.issuetype.name;
+        issueObject.summary = issue.fields.summary;
         
         var previousStatusChangeDate = datetime_creation;
         let historyA = issue.changelog.histories;
@@ -109,20 +122,32 @@ const jsontoexcel = (workbook, json) => {
                     newRow.getCell(switchDateOrTime(item.fromString)).value = dateTransition.toLocaleString();
                     // newRow.getCell(switchDateOrTime(item.fromString,false)).value = formatDateFromDays(statusUpdate[item.fromString]/(1000*60*60*24));
                     newRow.getCell(switchDateOrTime(item.fromString,false)).value = statusUpdate[item.fromString]/(1000*60*60*24);
+
+                    issueObject[`${switchDateOrTime(item.fromString)}`] = dateTransition.toLocaleString();
+                    issueObject[`${switchDateOrTime(item.fromString,false)}`] = statusUpdate[item.fromString]/(1000*60*60*24);
                 }
             }
         }
         // CYCLE Time series is a sum of in progress/code review/validation/merge/final check time
         newRow.getCell(constants.STR_CYCLETIME).value = 
-        newRow.getCell(constants.STR_PROGRESSTIME).value+
-        newRow.getCell(constants.STR_REVIEWTIME).value+
-        newRow.getCell(constants.STR_VALIDTIME).value+
-        newRow.getCell(constants.STR_MERGETIME).value+
-        newRow.getCell(constants.STR_FINALCTIME).value;
+            newRow.getCell(constants.STR_PROGRESSTIME).value+
+            newRow.getCell(constants.STR_REVIEWTIME).value+
+            newRow.getCell(constants.STR_VALIDTIME).value+
+            newRow.getCell(constants.STR_MERGETIME).value+
+            newRow.getCell(constants.STR_FINALCTIME).value;
+        issueObject.cycle_time = 
+            issueObject[constants.STR_PROGRESSTIME] !== undefined ? issueObject[constants.STR_PROGRESSTIME]:0+
+            issueObject[constants.STR_REVIEWTIME] !== undefined ? issueObject[constants.STR_REVIEWTIME]:0+
+            issueObject[constants.STR_VALIDTIME] !== undefined ? issueObject[constants.STR_VALIDTIME]:0+
+            issueObject[constants.STR_MERGETIME] !== undefined ? issueObject[constants.STR_MERGETIME]:0+
+            issueObject[constants.STR_FINALCTIME] !== undefined ? issueObject[constants.STR_FINALCTIME]:0;
         
+        internalArray.push(issueObject);
     }//end parsing issues
     
-    
+    // return an array of frequency for each values for a specific range with a step
+    // filter also values between a min and a high boundaries
+    // eg: for cycle time values, get frequency of values between 0 and 3 (step of 3 here)
     const freqCellColumnByKeyColumn = (step, cellColumn, columnKey ) => {
         let freq = {};
         const CTCol = sheet.getColumn(columnKey);
@@ -237,24 +262,19 @@ const fillRowValueInExcel = (rowObject, column, value ) => {
     rowObject.getCell(column).value = value;
 }
 
-const parseSprints = (workbook, json) => {
+const parseIdNameFromSprints = (workbook, json) => {
     const sheet = workbook.getWorksheet(constants.WORKSHEET_NAME);
     // getting first row to fill (remove group row and header row)
     const arrSprint = [];
-    let indexRow = 3;
     const filterSprints = json.sprints.filter((sprint) => 
     sprint.name.includes(constants.STR_EXP_FILTER_SPRINT) && 
     ( sprint.state.includes("CLOSED") || sprint.state.includes("ACTIVE")));
     const lastTenSprints = filterSprints.filter((_, idx) => idx >filterSprints.length-11);
     for(let sprintNb in lastTenSprints) {
-        let rowObject = sheet.getRow(indexRow);
-        fillRowValueInExcel(rowObject, constants.STR_SPRINT_ID, lastTenSprints[sprintNb].id );
-        fillRowValueInExcel(rowObject, constants.STR_SPRINT_NAME, lastTenSprints[sprintNb].name );
         arrSprint[sprintNb] = {
             "id": lastTenSprints[sprintNb].id,
             "name":lastTenSprints[sprintNb].name
         };
-        indexRow = indexRow + 1;
     }
     return(arrSprint);
 }
@@ -317,6 +337,21 @@ const initExcelFile = (workbook) => {
     ];
     return(workbook);
 }
+const fillExcelWithSprintsDetails = (workbook, sprintDetails) => {
+    const sheet = workbook.getWorksheet(constants.WORKSHEET_NAME);
+    //skipping titles : index 2
+    let indexRow = 2;
+    for(let details of sprintDetails) {
+        let rowObject = sheet.getRow(indexRow);
+        fillRowValueInExcel(rowObject, constants.STR_SPRINT_ID, details.id );
+        fillRowValueInExcel(rowObject, constants.STR_SPRINT_NAME, details.name );
+        fillRowValueInExcel(rowObject, constants.STR_SPRINT_STARTDATE, new Date(details.startDate).toLocaleString("fr-FR",{day:"numeric",month:"numeric",year:"numeric",hour:"numeric", minute:"numeric"}) );
+        fillRowValueInExcel(rowObject, constants.STR_SPRINT_ENDDATE, new Date(details.endDate).toLocaleString("fr-FR",{day:"numeric",month:"numeric",year:"numeric",hour:"numeric", minute:"numeric"}) );
+        fillRowValueInExcel(rowObject, constants.STR_SPRINT_COMPLETEDATE, new Date(details.completeDate).toLocaleString("fr-FR",{day:"numeric",month:"numeric",year:"numeric",hour:"numeric", minute:"numeric"}) );
+        indexRow = indexRow + 1;
+    }
+}
+
 const groupRows = (workbook) => {
     const sheet = workbook.getWorksheet(constants.WORKSHEET_NAME);
     //after filling all raw metrics, split with group row
@@ -357,38 +392,6 @@ const groupRows = (workbook) => {
         };
     });
 }
-const getAxiosConfig = (url, login, password, params ) => {
-    return(
-        {        
-            "method": 'get',
-            "withCredentials": true,
-            "headers": {
-                "Accept": "application/json",
-                "Content-Type": "application/json"
-            },
-            "url": url,
-            "auth": {
-                "username": login,
-                "password": password
-            },
-            ...params
-        }
-    )
-}
-
-const fillExcelWithSprintsDetails = (workbook, sprintDetails) => {
-    const sheet = workbook.getWorksheet(constants.WORKSHEET_NAME);
-    let item = {};
-    sheet.getColumn(constants.STR_SPRINT_ID).values.forEach( (value, index) => {
-        item = sprintDetails.filter(v => v.id === value);
-        if( (item !== undefined && item.length >0) ) {
-            let rowObject = sheet.getRow(index);
-            fillRowValueInExcel(rowObject, constants.STR_SPRINT_STARTDATE, item[0].startDate );
-            fillRowValueInExcel(rowObject, constants.STR_SPRINT_ENDDATE, item[0].endDate );
-            fillRowValueInExcel(rowObject, constants.STR_SPRINT_COMPLETEDATE, item[0].completeDate );
-        }
-    });
-}
 const main = async () => {
     const { login, password } = getJIRAVariables();
     // axios.interceptors.request.use(request => {
@@ -396,41 +399,34 @@ const main = async () => {
         //     return request
         //   })
         
-        const workbook = initExcelFile(new ExcelJS.Workbook());
-        const paramAxiosIssues = 
-        {    
-            "params": {
-                "expand":"changelog", // only accessible through get request and not in post jira api
-                "jql": constants.JIRA_QUERY,
-                "startAt":0,
-                "maxResults":500,
-            }
-    };
-    const paramAxiosSprints = 
-    {    
-        "params": {
-            "includeFutureSprints":true,
-            "includeHistoricSprints":false
-        }
-    };
+    const workbook = initExcelFile(new ExcelJS.Workbook());
+
     
     try {
-        // const jsonIssues = await axios(getAxiosConfig(constants.JIRA_URL,login, password, paramAxiosIssues));
-        // const jsonSprints = await axios(getAxiosConfig(`${constants.JIRA_GREENHOPER_URL}/${constants.TDC_JIRA_BOARD_ID}`,login, password, paramAxiosSprints));
-        
         // working locally to avoid calls to http
-        const jsonIssues = { "data": JSON.parse(fs.readFileSync(path.join(__dirname,'resIssues.json'), 'utf8'))}
-        const jsonSprints = { "data": JSON.parse(fs.readFileSync(path.join(__dirname,'resSprints.json'), 'utf8'))}
-        const jsonSprintId = { "data": JSON.parse(fs.readFileSync(path.join(__dirname,'resSprintId1772.json'), 'utf8'))}
+        const jsonIssues = { "data": JSON.parse(fs.readFileSync(path.join(__dirname,'mock/resIssues.json'), 'utf8'))}
+        const jsonSprints = { "data": JSON.parse(fs.readFileSync(path.join(__dirname,'mock/resSprints.json'), 'utf8'))}
+        const jsonSprintId = { "data": JSON.parse(fs.readFileSync(path.join(__dirname,'mock/resSprintId1772.json'), 'utf8'))}
+        
+        // const jsonIssues = await rest.getRequest(constants.JIRA_URL,login, password, rest.paramAxiosIssues);
+        // const jsonSprints = await rest.getRequest(`${constants.JIRA_GREENHOPER_URL}/${constants.TDC_JIRA_BOARD_ID}`,login, password, rest.paramAxiosSprints);
+
         jsontoexcel(workbook,jsonIssues.data);
-        const arrSprint = parseSprints(workbook,jsonSprints.data);
+        const arrSprint = parseIdNameFromSprints(workbook,jsonSprints.data);
         let jsonSprintDetails = []
         let jsonSprintDetail = {}
         for(const value of arrSprint) {
             if(value.id !== undefined) {
-                // jsonSprintDetail = await axios(getAxiosConfig(`${constants.JIRA_URL_SPRINT_BY_ID}/${value.id}`,login, password, {}));
+                // jsonSprintDetail = await rest.getRequest(`${constants.JIRA_URL_SPRINT_BY_ID}/${value.id}`,login, password, {});
                 jsonSprintDetail = jsonSprintId;
-                jsonSprintDetails.push(jsonSprintDetail.data);
+                jsonSprintDetails.push(
+                    { 
+                        "id" : value.id,
+                        "name" : value.name,
+                        "startDate" : jsonSprintDetail.data.startDate,
+                        "endDate" : jsonSprintDetail.data.endDate,
+                        "completeDate" : jsonSprintDetail.data.completeDate
+                    });
             }
         };
         fillExcelWithSprintsDetails(workbook,jsonSprintDetails);
