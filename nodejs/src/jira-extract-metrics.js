@@ -196,15 +196,14 @@ const parseIssues = (workbook, json) => {
         }
     );
     
-    //fill Cycle time and lead time 
     //fill Resolved issue metrics
-    let sortedColumns = fillSortedColumn(workbook);
-    let sortedColumns = fillSortedColumn2(internalArray);
-        
-    //sort array by resolution date and removing Too high values and too low as well
-    let filteredColumn = sortedColumns
-                            .filter(a => a.cycletime > constants.FILTER_LOW_CYCLETIME && a.cycletime <= constants.FILTER_HIGH_CYCLETIME)
-                            .sort((a,b) => new Date(a.resolution).getTime() - new Date(b.resolution).getTime());
+    let filteredColumn = internalArray.filter(value => {
+        return(
+        value.cycletime > constants.FILTER_LOW_CYCLETIME && 
+        value.cycletime <= constants.FILTER_HIGH_CYCLETIME &&
+        value.resolutiondate !== undefined)
+    })
+    .sort((a,b) => new Date(a.resolutiondate).getTime() - new Date(b.resolutiondate).getTime());
     
     //fill centile 20th | 50th | 80th of cycle time
     const centileThCycleTime = (centileTh) => {
@@ -224,7 +223,7 @@ const parseIssues = (workbook, json) => {
     filteredColumn.forEach((value,index) => {
         currentRow = sheet.getRow(index+2);
         currentRow.getCell(constants.STR_KEY_RESOLVED).value = value.key;
-        currentRow.getCell(constants.STR_RESOLUTION_DATE_RESOLVED).value = value.resolution;
+        currentRow.getCell(constants.STR_RESOLUTION_DATE_RESOLVED).value = value.resolutiondate;
         currentRow.getCell(constants.STR_CYCLETIME_RESOLVED).value = Number((Math.round(value.cycletime * 100)/100).toFixed(2));
         currentRow.getCell(constants.STR_LEADTIME_RESOLVED).value = Number((Math.round(value.leadtime * 100)/100).toFixed(2));
         currentRow.getCell(constants.STR_CENTILE_20TH_CYCLETIME).value = centileThCycleTime(20);
