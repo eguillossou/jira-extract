@@ -1,5 +1,6 @@
 const constants = require('../constants')
 const { consoleError } = require('../print');
+const percentile = require('just-percentile');
 
 const initExcelFile = (workbook) => {
     const sheet = workbook.addWorksheet(constants.WORKSHEET_NAME, {views:[{state: 'frozen', xSplit: 1, ySplit:1}]});
@@ -62,6 +63,70 @@ const initExcelFile = (workbook) => {
 }
 const fillRowValueInExcel = (rowObject, column, value ) => {
     rowObject.getCell(column).value = value;
+}
+
+const fillExcelWithCyleTimeDistribution = (workbook, distributionArray) => {
+    const sheet = workbook.getWorksheet(constants.WORKSHEET_NAME);
+    let index = 2;
+    distributionArray.forEach(
+        value => {
+            currentRow = sheet.getRow(index);
+            currentRow.getCell(constants.STR_CYCLETIMERANGE).value = value.cycletimerange;
+            currentRow.getCell(constants.STR_CYCLETIMEDISTRIBUTION).value = value.cycletimedistribution;
+            index = index + 1;
+        }
+    );
+}
+const fillExcelWithLeadTimeDistribution = (workbook, distributionArray) => {
+    const sheet = workbook.getWorksheet(constants.WORKSHEET_NAME);
+    index = 2;
+    distributionArray.forEach(
+        value => {
+            currentRow = sheet.getRow(index);
+            currentRow.getCell(constants.STR_LEADTIMERANGE).value = value.leadtimerange;
+            currentRow.getCell(constants.STR_LEADTIMEDISTRIBUTION).value = value.leadtimedistribution;    
+            index = index + 1; 
+        }
+    );
+}
+const fillExcelWithResolvedIssuesOnly = (workbook, issueArray) => {
+    const sheet = workbook.getWorksheet(constants.WORKSHEET_NAME);
+    let filteredColumn = issueArray.filter(value => {
+        return(
+        value.cycletime > constants.FILTER_LOW_CYCLETIME && 
+        value.cycletime <= constants.FILTER_HIGH_CYCLETIME &&
+        value.resolutiondate !== undefined)
+    })
+    .sort((a,b) => new Date(a.resolutiondate).getTime() - new Date(b.resolutiondate).getTime());
+
+    //fill centile 20th | 50th | 80th of cycle time
+    const centileThCycleTime = (centileTh) => {
+        return (percentile(
+            filteredColumn
+            .map((value) => value.cycletime)
+            .sort((a,b)=> a-b), centileTh));
+    }
+    //fill centile  50th | 80th of lead time
+    const centileThLeadTime = (centileTh) => {
+        return (percentile(
+            filteredColumn
+            .map((value) => value.leadtime)
+            .sort((a,b)=> a-b), centileTh));
+    }
+
+    filteredColumn.forEach((value,index) => {
+        currentRow = sheet.getRow(index+2);
+        currentRow.getCell(constants.STR_KEY_RESOLVED).value = value.key;
+        currentRow.getCell(constants.STR_RESOLUTION_DATE_RESOLVED).value = value.resolutiondate;
+        currentRow.getCell(constants.STR_CYCLETIME_RESOLVED).value = Number((Math.round(value.cycletime * 100)/100).toFixed(2));
+        currentRow.getCell(constants.STR_LEADTIME_RESOLVED).value = Number((Math.round(value.leadtime * 100)/100).toFixed(2));
+        currentRow.getCell(constants.STR_CENTILE_20TH_CYCLETIME).value = centileThCycleTime(20);
+        currentRow.getCell(constants.STR_CENTILE_50TH_CYCLETIME).value = centileThCycleTime(50);
+        currentRow.getCell(constants.STR_CENTILE_80TH_CYCLETIME).value = centileThCycleTime(80);
+        currentRow.getCell(constants.STR_CENTILE_50TH_LEADTIME).value = centileThLeadTime(50);
+        currentRow.getCell(constants.STR_CENTILE_80TH_LEADTIME).value = centileThLeadTime(80);
+    });
+
 }
 const fillExcelWithSprintsDetails = (workbook, sprintDetails) => {
     const sheet = workbook.getWorksheet(constants.WORKSHEET_NAME);
@@ -130,6 +195,9 @@ module.exports = {
     initExcelFile,
     fillExcelWithSprintsDetails,
     fillRowValueInExcel,
+    fillExcelWithCyleTimeDistribution,
+    fillExcelWithLeadTimeDistribution,
+    fillExcelWithResolvedIssuesOnly,
     groupRows,
     writeExcelFile
 }

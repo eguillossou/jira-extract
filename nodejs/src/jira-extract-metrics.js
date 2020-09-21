@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 // const axios = require('axios');
 const ExcelJS = require('exceljs');
-const percentile = require('just-percentile');
 const constants = require('./constants')
 const rest = require('./services/rest');
 // const { fill } = require('lodash');
@@ -63,7 +62,7 @@ const switchDateOrTime = (transition,isDate=true) => {
 // return an array of frequency for each values for a specific range with a step
 // filter also values between a min and a high boundaries
 // eg: for cycle time values, get frequency of values between 0 and 3 (step of 3 here)
-const freqCellColumnByKeyColumn2 = (step, internalArray, cellColumn, columnKey ) => {
+const freqCellColumnByKeyColumn = (step, internalArray, cellColumn, columnKey ) => {
     let freq = {};
     internalArray.forEach( (value) => {
         if(value.resolutiondate!== undefined &&
@@ -172,69 +171,9 @@ const parseIssues = (workbook, json) => {
         
         internalArray.push(issueObject);
     }//end parsing issues
-    //return(internalArray);
-        
-    //fill Distribution Cycle time
-    let index = 2;
-    fillDistributionCycleTime(internalArray).forEach(
-        value => {
-            currentRow = sheet.getRow(index);
-            currentRow.getCell(constants.STR_CYCLETIMERANGE).value = value.cycletimerange;
-            currentRow.getCell(constants.STR_CYCLETIMEDISTRIBUTION).value = value.cycletimedistribution;
-            index = index + 1; 
-        }
-    );
-
-    //fill Distribution Lead time
-    index = 2;
-    fillDistributionLeadTime(internalArray).forEach(
-        value => {
-            currentRow = sheet.getRow(index);
-            currentRow.getCell(constants.STR_LEADTIMERANGE).value = value.leadtimerange;
-            currentRow.getCell(constants.STR_LEADTIMEDISTRIBUTION).value = value.leadtimedistribution;    
-            index = index + 1; 
-        }
-    );
-    
-    //fill Resolved issue metrics
-    let filteredColumn = internalArray.filter(value => {
-        return(
-        value.cycletime > constants.FILTER_LOW_CYCLETIME && 
-        value.cycletime <= constants.FILTER_HIGH_CYCLETIME &&
-        value.resolutiondate !== undefined)
-    })
-    .sort((a,b) => new Date(a.resolutiondate).getTime() - new Date(b.resolutiondate).getTime());
-    
-    //fill centile 20th | 50th | 80th of cycle time
-    const centileThCycleTime = (centileTh) => {
-        return (percentile(
-            filteredColumn
-            .map((value) => value.cycletime)
-            .sort((a,b)=> a-b), centileTh));
-    }
-    //fill centile  50th | 80th of lead time
-    const centileThLeadTime = (centileTh) => {
-        return (percentile(
-            filteredColumn
-            .map((value) => value.leadtime)
-            .sort((a,b)=> a-b), centileTh));
-    }
-    
-    filteredColumn.forEach((value,index) => {
-        currentRow = sheet.getRow(index+2);
-        currentRow.getCell(constants.STR_KEY_RESOLVED).value = value.key;
-        currentRow.getCell(constants.STR_RESOLUTION_DATE_RESOLVED).value = value.resolutiondate;
-        currentRow.getCell(constants.STR_CYCLETIME_RESOLVED).value = Number((Math.round(value.cycletime * 100)/100).toFixed(2));
-        currentRow.getCell(constants.STR_LEADTIME_RESOLVED).value = Number((Math.round(value.leadtime * 100)/100).toFixed(2));
-        currentRow.getCell(constants.STR_CENTILE_20TH_CYCLETIME).value = centileThCycleTime(20);
-        currentRow.getCell(constants.STR_CENTILE_50TH_CYCLETIME).value = centileThCycleTime(50);
-        currentRow.getCell(constants.STR_CENTILE_80TH_CYCLETIME).value = centileThCycleTime(80);
-        currentRow.getCell(constants.STR_CENTILE_50TH_LEADTIME).value = centileThLeadTime(50);
-        currentRow.getCell(constants.STR_CENTILE_80TH_LEADTIME).value = centileThLeadTime(80);
-    });
-    
+    return(internalArray);
 }
-    
+ 
 const parseIdNameFromSprints = (json) => {
     // getting first row to fill (remove group row and header row)
     const arrSprint = [];
@@ -251,11 +190,11 @@ const parseIdNameFromSprints = (json) => {
     return(arrSprint);
 }
 
-const fillDistributionCycleTime = (internalArray) => {
+const calculateDistributionCycleTime = (internalArray) => {
     var freqCT = {};
     const distributionCycleTime = [];
     const step = 3;
-    freqCT = freqCellColumnByKeyColumn2(step,internalArray,constants.STR_RESODATE, constants.STR_CYCLETIME);
+    freqCT = freqCellColumnByKeyColumn(step,internalArray,constants.STR_RESODATE, constants.STR_CYCLETIME);
 
     const maxKey = Math.max(...Object.keys(freqCT));
     for (let steps = 0; steps < maxKey + 2; steps++) {
@@ -267,11 +206,11 @@ const fillDistributionCycleTime = (internalArray) => {
     }
     return(distributionCycleTime)
 }
-const fillDistributionLeadTime = (internalArray) => {
+const calculateDistributionLeadTime = (internalArray) => {
     var freqLT = {};
     const distributionLeadTime = [];
     const stepLT = 5;
-    freqLT = freqCellColumnByKeyColumn2(stepLT,internalArray,constants.STR_RESODATE, constants.STR_LEADTIME);
+    freqLT = freqCellColumnByKeyColumn(stepLT,internalArray,constants.STR_RESODATE, constants.STR_LEADTIME);
 
     const maxKeyLT = Math.max(...Object.keys(freqLT));
     for (let steps = 0; steps < maxKeyLT + 2; steps++) {
@@ -283,42 +222,6 @@ const fillDistributionLeadTime = (internalArray) => {
     }
     return(distributionLeadTime)
 }
-// const fillSortedColumn = (workbook) => {
-//     const sheet = workbook.getWorksheet(constants.WORKSHEET_NAME);
-//     const resDateCol = sheet.getColumn(constants.STR_RESODATE);
-//     let sortedColumns = [];
-//     let indexResoDate = 2;
-//     resDateCol.eachCell(function (cell, rowNumber) {
-//         if (cell.value !== constants.STR_RESODATE &&
-//             cell.value !== null) {
-//                 sortedColumns.push(
-//                     {"key": sheet.getColumn(constants.STR_KEY).values[rowNumber],
-//                 "resolution": sheet.getColumn(constants.STR_RESODATE).values[rowNumber],
-//                 "cycletime": sheet.getColumn(constants.STR_CYCLETIME).values[rowNumber],
-//                 "leadtime": sheet.getColumn(constants.STR_LEADTIME).values[rowNumber]
-//             });
-//             indexResoDate = indexResoDate + 1;
-//         }
-//     });
-//     return sortedColumns;
-// }
-const fillSortedColumn2 = (internalArray) => {
-    let sortedColumns = [];
-
-    internalArray.forEach( (value) => {
-        if (value.resolutiondate !== constants.STR_RESODATE &&
-            value.resolutiondate !== undefined) {
-            sortedColumns.push(
-                {
-                    "key": value.key,
-                    "resolution": value.resolutiondate,
-                    "cycletime": value.cycletime,
-                    "leadtime": value.leadtime
-                });
-        }
-    });
-    return sortedColumns;
-}
 const main = async () => {
     const { login, password } = getJIRAVariables();
     // axios.interceptors.request.use(request => {
@@ -327,6 +230,7 @@ const main = async () => {
         //   })
         
     const workbook = excel.initExcelFile(new ExcelJS.Workbook());
+    const sheet = workbook.getWorksheet(constants.WORKSHEET_NAME);
 
     
     try {
@@ -338,7 +242,16 @@ const main = async () => {
         // const jsonIssues = await rest.getRequest(constants.JIRA_URL,login, password, rest.paramAxiosIssues);
         // const jsonSprints = await rest.getRequest(`${constants.JIRA_GREENHOPER_URL}/${constants.TDC_JIRA_BOARD_ID}`,login, password, rest.paramAxiosSprints);
 
-        parseIssues(workbook,jsonIssues.data);
+        let issueArray = parseIssues(workbook,jsonIssues.data);
+
+        
+        //fill Distribution Cycle time in Excel file
+        excel.fillExcelWithCyleTimeDistribution(workbook, calculateDistributionCycleTime(issueArray));
+        //fill Distribution Lead time in Excel file
+        excel.fillExcelWithLeadTimeDistribution(workbook, calculateDistributionLeadTime(issueArray));
+        //fill Resolved issue metrics in Excel file
+        excel.fillExcelWithResolvedIssuesOnly(workbook, issueArray);
+
         const arrSprint = parseIdNameFromSprints(jsonSprints.data);
         let jsonSprintDetails = []
         let jsonSprintDetail = {}
