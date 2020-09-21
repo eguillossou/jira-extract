@@ -1,6 +1,5 @@
 const axios = require('axios');
 const constants = require('../constants')
-const { printInfo,consoleError } = require('../print');
 
 const paramAxiosIssues = 
 {    
