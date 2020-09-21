@@ -1,10 +1,10 @@
 #!/usr/bin/env node
-const axios = require('axios');
+// const axios = require('axios');
 const ExcelJS = require('exceljs');
 const percentile = require('just-percentile');
 const constants = require('./constants')
 const rest = require('./services/rest');
-const { fill } = require('lodash');
+// const { fill } = require('lodash');
 const fs = require('fs');
 const path = require('path');
 const excel = require('./services/excel')
@@ -45,44 +45,47 @@ const switchDateOrTime = (transition,isDate=true) => {
     }
 }
 
-const formatDateFromDays = (nbOfDays) => {
-    const nbOfRemainingDays = nbOfDays-Math.floor(nbOfDays);
-    const nbHours = Math.floor(nbOfRemainingDays*24);
-    const nbOfRemainingHours = nbOfRemainingDays*24 - Math.floor(nbOfRemainingDays*24);
-    const nbMinutes = Math.floor(nbOfRemainingHours*60);
-    const nbOfRemainingMinutes = nbOfRemainingHours*60 - Math.floor(nbOfRemainingHours*60);
-    const nbSec = Math.floor(nbOfRemainingMinutes*60);
-    const strNbays = Math.floor(nbOfDays);
-    const strNbHours = nbHours < 10 ? `0${nbHours}` : nbHours;
-    const strNbMinutes = nbMinutes < 10 ? `0${nbMinutes}` : nbMinutes;
-    const strNbSec = nbSec < 10 ? `0${nbSec}` : nbSec;
-    return(`${strNbays} Days ${strNbHours}:${strNbMinutes}:${strNbSec}`);
-}
+// const formatDateFromDays = (nbOfDays) => {
+//     const nbOfRemainingDays = nbOfDays-Math.floor(nbOfDays);
+//     const nbHours = Math.floor(nbOfRemainingDays*24);
+//     const nbOfRemainingHours = nbOfRemainingDays*24 - Math.floor(nbOfRemainingDays*24);
+//     const nbMinutes = Math.floor(nbOfRemainingHours*60);
+//     const nbOfRemainingMinutes = nbOfRemainingHours*60 - Math.floor(nbOfRemainingHours*60);
+//     const nbSec = Math.floor(nbOfRemainingMinutes*60);
+//     const strNbays = Math.floor(nbOfDays);
+//     const strNbHours = nbHours < 10 ? `0${nbHours}` : nbHours;
+//     const strNbMinutes = nbMinutes < 10 ? `0${nbMinutes}` : nbMinutes;
+//     const strNbSec = nbSec < 10 ? `0${nbSec}` : nbSec;
+//     return(`${strNbays} Days ${strNbHours}:${strNbMinutes}:${strNbSec}`);
+// }
+
+
 // return an array of frequency for each values for a specific range with a step
 // filter also values between a min and a high boundaries
 // eg: for cycle time values, get frequency of values between 0 and 3 (step of 3 here)
-const freqCellColumnByKeyColumn = (sheet, step, cellColumn, columnKey ) => {
+const freqCellColumnByKeyColumn2 = (step, internalArray, cellColumn, columnKey ) => {
     let freq = {};
-    const CTCol = sheet.getColumn(columnKey);
-    
-    CTCol.eachCell( (cell, rowNumber) => {
-        if(cell.value !== columnKey && 
-            cell.value !== 0 &&
-            sheet.getColumn(cellColumn).values[rowNumber] !== undefined &&
-            sheet.getColumn(cellColumn).values[rowNumber] !== cellColumn &&
-            cell.value<constants.FILTER_HIGH_CYCLETIME &&
-            cell.value>=constants.FILTER_LOW_CYCLETIME
-            ) {
-                let rangeIdx = Math.floor(cell/step);
-                if(rangeIdx in freq){
-                    freq[rangeIdx] = freq[rangeIdx]+1;
-                } else {
-                    freq[rangeIdx] = 1;
+    internalArray.forEach( (value) => {
+        if(value.resolutiondate!== undefined &&
+            value.resolutiondate !== cellColumn) {
+                let valueSelect = value.cycletime; 
+                if(columnKey === constants.STR_LEADTIME) valueSelect = value.leadtime;
+                if( valueSelect !== columnKey && 
+                    valueSelect !== 0 &&
+                    valueSelect < constants.FILTER_HIGH_CYCLETIME &&
+                    valueSelect >= constants.FILTER_LOW_CYCLETIME) {
+                    let rangeIdx = Math.floor(valueSelect/step);
+                    if(rangeIdx in freq){
+                        freq[rangeIdx] = freq[rangeIdx]+1;
+                    } else {
+                        freq[rangeIdx] = 1;
+                    }
                 }
-            }
+        }
     });
     return(freq);
 }
+
 const parseIssues = (workbook, json) => {
     const sheet = workbook.getWorksheet(constants.WORKSHEET_NAME);
     const internalArray = [];
@@ -106,8 +109,8 @@ const parseIssues = (workbook, json) => {
             newRow.getCell(constants.STR_CREATIONDATE).value = datetime_creation.toLocaleString("fr-FR",{day:"numeric",month:"numeric",year:"numeric"});
             newRow.getCell(constants.STR_NEWDATE).value = datetime_creation.toLocaleString();
 
-            issueObject.creation_date = datetime_creation.toLocaleString("fr-FR",{day:"numeric",month:"numeric",year:"numeric"});
-            issueObject.new_date = datetime_creation.toLocaleString();
+            issueObject.creationdate = datetime_creation.toLocaleString("fr-FR",{day:"numeric",month:"numeric",year:"numeric"});
+            issueObject.newdate = datetime_creation.toLocaleString();
         }
         
         // # Get datetime resolution
@@ -118,8 +121,8 @@ const parseIssues = (workbook, json) => {
             // newRow.getCell(constants.STR_LEADTIME).value = formatDateFromDays(nbOfDays);
             newRow.getCell(constants.STR_LEADTIME).value = nbOfDays;
 
-            issueObject.reso_date = datetime_resolution.toLocaleString("fr-FR",{day:"numeric",month:"numeric",year:"numeric"});
-            issueObject.lead_time = nbOfDays;
+            issueObject.resolutiondate = datetime_resolution.toLocaleString("fr-FR",{day:"numeric",month:"numeric",year:"numeric"});
+            issueObject.leadtime = nbOfDays;
         }
         
         newRow.getCell(constants.STR_TYPE).value = issue.fields.issuetype.name;
@@ -160,26 +163,43 @@ const parseIssues = (workbook, json) => {
             newRow.getCell(constants.STR_VALIDTIME).value+
             newRow.getCell(constants.STR_MERGETIME).value+
             newRow.getCell(constants.STR_FINALCTIME).value;
-        issueObject.cycle_time = 
-            issueObject[constants.STR_PROGRESSTIME] !== undefined ? issueObject[constants.STR_PROGRESSTIME]:0+
-            issueObject[constants.STR_REVIEWTIME] !== undefined ? issueObject[constants.STR_REVIEWTIME]:0+
-            issueObject[constants.STR_VALIDTIME] !== undefined ? issueObject[constants.STR_VALIDTIME]:0+
-            issueObject[constants.STR_MERGETIME] !== undefined ? issueObject[constants.STR_MERGETIME]:0+
-            issueObject[constants.STR_FINALCTIME] !== undefined ? issueObject[constants.STR_FINALCTIME]:0;
+        issueObject.cycletime = 
+            (issueObject[constants.STR_PROGRESSTIME] !== undefined ? issueObject[constants.STR_PROGRESSTIME]:0)+
+            (issueObject[constants.STR_REVIEWTIME] !== undefined ? issueObject[constants.STR_REVIEWTIME]:0)+
+            (issueObject[constants.STR_VALIDTIME] !== undefined ? issueObject[constants.STR_VALIDTIME]:0)+
+            (issueObject[constants.STR_MERGETIME] !== undefined ? issueObject[constants.STR_MERGETIME]:0)+
+            (issueObject[constants.STR_FINALCTIME] !== undefined ? issueObject[constants.STR_FINALCTIME]:0);
         
         internalArray.push(issueObject);
     }//end parsing issues
     //return(internalArray);
         
     //fill Distribution Cycle time
-    fillDistributionCycleTime(workbook);
+    let index = 2;
+    fillDistributionCycleTime(internalArray).forEach(
+        value => {
+            currentRow = sheet.getRow(index);
+            currentRow.getCell(constants.STR_CYCLETIMERANGE).value = value.cycletimerange;
+            currentRow.getCell(constants.STR_CYCLETIMEDISTRIBUTION).value = value.cycletimedistribution;
+            index = index + 1; 
+        }
+    );
 
     //fill Distribution Lead time
-    fillDistributionLeadTime(workbook);
+    index = 2;
+    fillDistributionLeadTime(internalArray).forEach(
+        value => {
+            currentRow = sheet.getRow(index);
+            currentRow.getCell(constants.STR_LEADTIMERANGE).value = value.leadtimerange;
+            currentRow.getCell(constants.STR_LEADTIMEDISTRIBUTION).value = value.leadtimedistribution;    
+            index = index + 1; 
+        }
+    );
     
     //fill Cycle time and lead time 
     //fill Resolved issue metrics
     let sortedColumns = fillSortedColumn(workbook);
+    let sortedColumns = fillSortedColumn2(internalArray);
         
     //sort array by resolution date and removing Too high values and too low as well
     let filteredColumn = sortedColumns
@@ -232,53 +252,70 @@ const parseIdNameFromSprints = (json) => {
     return(arrSprint);
 }
 
-const fillDistributionCycleTime = (workbook) => {
-    const sheet = workbook.getWorksheet(constants.WORKSHEET_NAME);
+const fillDistributionCycleTime = (internalArray) => {
     var freqCT = {};
+    const distributionCycleTime = [];
     const step = 3;
-    freqCT = freqCellColumnByKeyColumn(sheet, step, constants.STR_RESODATE, constants.STR_CYCLETIME);
+    freqCT = freqCellColumnByKeyColumn2(step,internalArray,constants.STR_RESODATE, constants.STR_CYCLETIME);
 
-    // const freqInRange = ([key,value]) => value > constants.FILTER_LOW_CYCLETIME && value <= constants.FILTER_HIGH_CYCLETIME;
-    // const freqCTfilteredByValue = Object.fromEntries(Object.entries(freqCT).filter(freqInRange));
     const maxKey = Math.max(...Object.keys(freqCT));
     for (let steps = 0; steps < maxKey + 2; steps++) {
         //jump first row <=> title
-        currentRow = sheet.getRow(steps + 2);
-        currentRow.getCell(constants.STR_CYCLETIMERANGE).value = steps * step;
-        currentRow.getCell(constants.STR_CYCLETIMEDISTRIBUTION).value = freqCT[steps] !== undefined ? freqCT[steps] : 0;
+        distributionCycleTime.push({
+            cycletimerange : steps*step,
+            cycletimedistribution: freqCT[steps] !== undefined ? freqCT[steps] : 0
+        });
     }
+    return(distributionCycleTime)
 }
-const fillDistributionLeadTime = (workbook) => {
-    const sheet = workbook.getWorksheet(constants.WORKSHEET_NAME);
+const fillDistributionLeadTime = (internalArray) => {
     var freqLT = {};
+    const distributionLeadTime = [];
     const stepLT = 5;
-    freqLT = freqCellColumnByKeyColumn(sheet, stepLT, constants.STR_RESODATE, constants.STR_LEADTIME);
+    freqLT = freqCellColumnByKeyColumn2(stepLT,internalArray,constants.STR_RESODATE, constants.STR_LEADTIME);
 
     const maxKeyLT = Math.max(...Object.keys(freqLT));
     for (let steps = 0; steps < maxKeyLT + 2; steps++) {
         //jump first row <=> title
-        currentRow = sheet.getRow(steps + 2);
-        currentRow.getCell(constants.STR_LEADTIMERANGE).value = steps * stepLT;
-        currentRow.getCell(constants.STR_LEADTIMEDISTRIBUTION).value = freqLT[steps] !== undefined ? freqLT[steps] : 0;
+        distributionLeadTime.push({
+            leadtimerange : steps*stepLT,
+            leadtimedistribution: freqLT[steps] !== undefined ? freqLT[steps] : 0
+        });
     }
+    return(distributionLeadTime)
 }
-
-const fillSortedColumn = (workbook) => {
-    const sheet = workbook.getWorksheet(constants.WORKSHEET_NAME);
-    const resDateCol = sheet.getColumn(constants.STR_RESODATE);
+// const fillSortedColumn = (workbook) => {
+//     const sheet = workbook.getWorksheet(constants.WORKSHEET_NAME);
+//     const resDateCol = sheet.getColumn(constants.STR_RESODATE);
+//     let sortedColumns = [];
+//     let indexResoDate = 2;
+//     resDateCol.eachCell(function (cell, rowNumber) {
+//         if (cell.value !== constants.STR_RESODATE &&
+//             cell.value !== null) {
+//                 sortedColumns.push(
+//                     {"key": sheet.getColumn(constants.STR_KEY).values[rowNumber],
+//                 "resolution": sheet.getColumn(constants.STR_RESODATE).values[rowNumber],
+//                 "cycletime": sheet.getColumn(constants.STR_CYCLETIME).values[rowNumber],
+//                 "leadtime": sheet.getColumn(constants.STR_LEADTIME).values[rowNumber]
+//             });
+//             indexResoDate = indexResoDate + 1;
+//         }
+//     });
+//     return sortedColumns;
+// }
+const fillSortedColumn2 = (internalArray) => {
     let sortedColumns = [];
-    let indexResoDate = 2;
-    resDateCol.eachCell(function (cell, rowNumber) {
-        if (cell.value !== constants.STR_RESODATE &&
-            cell.value !== null) {
+
+    internalArray.forEach( (value) => {
+        if (value.resolutiondate !== constants.STR_RESODATE &&
+            value.resolutiondate !== undefined) {
             sortedColumns.push(
                 {
-                    "key": sheet.getColumn(constants.STR_KEY).values[rowNumber],
-                    "resolution": sheet.getColumn(constants.STR_RESODATE).values[rowNumber],
-                    "cycletime": sheet.getColumn(constants.STR_CYCLETIME).values[rowNumber],
-                    "leadtime": sheet.getColumn(constants.STR_LEADTIME).values[rowNumber]
+                    "key": value.key,
+                    "resolution": value.resolutiondate,
+                    "cycletime": value.cycletime,
+                    "leadtime": value.leadtime
                 });
-            indexResoDate = indexResoDate + 1;
         }
     });
     return sortedColumns;
