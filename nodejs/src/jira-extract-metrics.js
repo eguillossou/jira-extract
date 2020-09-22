@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 // const axios = require('axios');
-const ExcelJS = require('exceljs');
 const constants = require('./constants')
 const rest = require('./services/rest');
 // const { fill } = require('lodash');
@@ -85,19 +84,13 @@ const freqCellColumnByKeyColumn = (step, internalArray, cellColumn, columnKey ) 
     return(freq);
 }
 
-const parseIssues = (workbook, json) => {
-    const sheet = workbook.getWorksheet(constants.WORKSHEET_NAME);
+const parseIssues = ( json ) => {
     const internalArray = [];
     
     // Cross all issues retrieved from JIRA jql query
     for(let issueIdx in json.issues){
         const issue = json.issues[issueIdx];
         statusUpdate={};
-        const lastRow = sheet.lastRow;
-        const newRow = sheet.addRow(++(lastRow.number));
-        newRow.getCell(constants.STR_KEY).value = issue.key;
-        newRow.commit();
-        printInfo(`Analysing ${newRow.getCell(constants.STR_KEY).value} item`);
         const issueObject = {};
 
         issueObject.key = issue.key;
@@ -105,9 +98,6 @@ const parseIssues = (workbook, json) => {
         // # Get datetime creation
         const datetime_creation = issue.fields.created ? new Date(issue.fields.created) : undefined;
         if(datetime_creation !== undefined) {
-            newRow.getCell(constants.STR_CREATIONDATE).value = datetime_creation.toLocaleString("fr-FR",{day:"numeric",month:"numeric",year:"numeric"});
-            newRow.getCell(constants.STR_NEWDATE).value = datetime_creation.toLocaleString();
-
             issueObject.creationdate = datetime_creation.toLocaleString("fr-FR",{day:"numeric",month:"numeric",year:"numeric"});
             issueObject.newdate = datetime_creation.toLocaleString();
         }
@@ -115,18 +105,11 @@ const parseIssues = (workbook, json) => {
         // # Get datetime resolution
         const datetime_resolution = issue.fields.resolutiondate ? new Date(issue.fields.resolutiondate) : undefined;
         if(datetime_resolution !== undefined) {
-            newRow.getCell(constants.STR_RESODATE).value = datetime_resolution.toLocaleString("fr-FR",{day:"numeric",month:"numeric",year:"numeric"});
             const nbOfDays = (datetime_resolution.getTime()-datetime_creation.getTime()) / (1000*60*60*24)
-            // newRow.getCell(constants.STR_LEADTIME).value = formatDateFromDays(nbOfDays);
-            newRow.getCell(constants.STR_LEADTIME).value = nbOfDays;
 
             issueObject.resolutiondate = datetime_resolution.toLocaleString("fr-FR",{day:"numeric",month:"numeric",year:"numeric"});
             issueObject.leadtime = nbOfDays;
         }
-        
-        newRow.getCell(constants.STR_TYPE).value = issue.fields.issuetype.name;
-        newRow.getCell(constants.STR_SUMMARY).value = issue.fields.summary;
-
         issueObject.type = issue.fields.issuetype.name;
         issueObject.summary = issue.fields.summary;
         
@@ -146,22 +129,12 @@ const parseIssues = (workbook, json) => {
                     statusUpdate[item.fromString] += (dateTransition - previousStatusChangeDate);
                     previousStatusChangeDate = dateTransition;
                     
-                    newRow.getCell(switchDateOrTime(item.fromString)).value = dateTransition.toLocaleString();
-                    // newRow.getCell(switchDateOrTime(item.fromString,false)).value = formatDateFromDays(statusUpdate[item.fromString]/(1000*60*60*24));
-                    newRow.getCell(switchDateOrTime(item.fromString,false)).value = statusUpdate[item.fromString]/(1000*60*60*24);
-
                     issueObject[`${switchDateOrTime(item.fromString)}`] = dateTransition.toLocaleString();
                     issueObject[`${switchDateOrTime(item.fromString,false)}`] = statusUpdate[item.fromString]/(1000*60*60*24);
                 }
             }
         }
         // CYCLE Time series is a sum of in progress/code review/validation/merge/final check time
-        newRow.getCell(constants.STR_CYCLETIME).value = 
-            newRow.getCell(constants.STR_PROGRESSTIME).value+
-            newRow.getCell(constants.STR_REVIEWTIME).value+
-            newRow.getCell(constants.STR_VALIDTIME).value+
-            newRow.getCell(constants.STR_MERGETIME).value+
-            newRow.getCell(constants.STR_FINALCTIME).value;
         issueObject.cycletime = 
             (issueObject[constants.STR_PROGRESSTIME] !== undefined ? issueObject[constants.STR_PROGRESSTIME]:0)+
             (issueObject[constants.STR_REVIEWTIME] !== undefined ? issueObject[constants.STR_REVIEWTIME]:0)+
@@ -228,10 +201,6 @@ const main = async () => {
         //     console.log('Starting Request', request)
         //     return request
         //   })
-        
-    const workbook = excel.initExcelFile(new ExcelJS.Workbook());
-    const sheet = workbook.getWorksheet(constants.WORKSHEET_NAME);
-
     
     try {
         // working locally to avoid calls to http
@@ -242,15 +211,16 @@ const main = async () => {
         // const jsonIssues = await rest.getRequest(constants.JIRA_URL,login, password, rest.paramAxiosIssues);
         // const jsonSprints = await rest.getRequest(`${constants.JIRA_GREENHOPER_URL}/${constants.TDC_JIRA_BOARD_ID}`,login, password, rest.paramAxiosSprints);
 
-        let issueArray = parseIssues(workbook,jsonIssues.data);
+        let issueArray = parseIssues(jsonIssues.data);
 
-        
+        //fill raw issues to Excel file
+        excel.fileExcelWithRawIssues(issueArray);
         //fill Distribution Cycle time in Excel file
-        excel.fillExcelWithCyleTimeDistribution(workbook, calculateDistributionCycleTime(issueArray));
+        excel.fillExcelWithCyleTimeDistribution(calculateDistributionCycleTime(issueArray));
         //fill Distribution Lead time in Excel file
-        excel.fillExcelWithLeadTimeDistribution(workbook, calculateDistributionLeadTime(issueArray));
+        excel.fillExcelWithLeadTimeDistribution(calculateDistributionLeadTime(issueArray));
         //fill Resolved issue metrics in Excel file
-        excel.fillExcelWithResolvedIssuesOnly(workbook, issueArray);
+        excel.fillExcelWithResolvedIssuesOnly(issueArray);
 
         const arrSprint = parseIdNameFromSprints(jsonSprints.data);
         let jsonSprintDetails = []
@@ -269,9 +239,9 @@ const main = async () => {
                     });
             }
         };
-        excel.fillExcelWithSprintsDetails(workbook,jsonSprintDetails);
-        excel.groupRows(workbook);
-        excel.writeExcelFile(workbook);
+        excel.fillExcelWithSprintsDetails(jsonSprintDetails);
+        excel.groupRows();
+        excel.writeExcelFile();
     } catch (error) {
         consoleError(error);
     }

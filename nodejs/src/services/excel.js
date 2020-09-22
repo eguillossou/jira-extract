@@ -1,8 +1,11 @@
 const constants = require('../constants')
-const { consoleError } = require('../print');
 const percentile = require('just-percentile');
+const { printError,printInfo,consoleError } = require('../print');
+const ExcelJS = require('exceljs');
 
-const initExcelFile = (workbook) => {
+const workbook = new ExcelJS.Workbook();
+
+const initExcelFile = () => {
     const sheet = workbook.addWorksheet(constants.WORKSHEET_NAME, {views:[{state: 'frozen', xSplit: 1, ySplit:1}]});
     sheet.columns = [
         {header: constants.STR_KEY, key:constants.STR_KEY, width: '25'},
@@ -59,13 +62,58 @@ const initExcelFile = (workbook) => {
         {header: constants.STR_SPRINT_ENDDATE, key:constants.STR_SPRINT_ENDDATE, width: '25'},
         {header: constants.STR_SPRINT_COMPLETEDATE, key:constants.STR_SPRINT_COMPLETEDATE, width: '25'},
     ];
-    return(workbook);
 }
 const fillRowValueInExcel = (rowObject, column, value ) => {
     rowObject.getCell(column).value = value;
 }
+const fileExcelWithRawIssues = (issueArray) => {
+    const sheet = workbook.getWorksheet(constants.WORKSHEET_NAME);
 
-const fillExcelWithCyleTimeDistribution = (workbook, distributionArray) => {
+    issueArray.forEach((value,index) => {
+        const lastRow = sheet.lastRow;
+        const newRow = sheet.addRow(++(lastRow.number));
+        newRow.getCell(constants.STR_KEY).value = value.key;
+        newRow.commit();
+        printInfo(`Analysing ${newRow.getCell(constants.STR_KEY).value} item`);
+        newRow.getCell(constants.STR_KEY_RESOLVED).value = value.key;
+        newRow.getCell(constants.STR_CREATIONDATE).value = value.creationdate;
+        newRow.getCell(constants.STR_NEWDATE).value = value.newdate;
+        newRow.getCell(constants.STR_RESODATE).value = value.resolutiondate; 
+        newRow.getCell(constants.STR_LEADTIME).value = value.leadtime;
+        newRow.getCell(constants.STR_TYPE).value = value.type;
+        newRow.getCell(constants.STR_SUMMARY).value = value.summary;
+        newRow.getCell(constants.STR_CYCLETIME).value = value.cycletime;
+        newRow.getCell(constants.STR_TODODATE).value = value[`${constants.STR_TODODATE}`];
+        newRow.getCell(constants.STR_TODOTIME).value = value[`${constants.STR_TODOTIME}`];
+        newRow.getCell(constants.STR_NEWDATE).value = value[`${constants.STR_NEWDATE}`];
+        newRow.getCell(constants.STR_NEWTIME).value = value[`${constants.STR_NEWTIME}`];
+        newRow.getCell(constants.STR_CANDIDATEDATE).value = value[`${constants.STR_CANDIDATEDATE}`];
+        newRow.getCell(constants.STR_CANDIDATETIME).value = value[`${constants.STR_CANDIDATETIME}`];
+        newRow.getCell(constants.STR_ACCEPTDATE).value = value[`${constants.STR_ACCEPTDATE}`];
+        newRow.getCell(constants.STR_ACCEPTTIME).value = value[`${constants.STR_ACCEPTTIME}`];
+        newRow.getCell(constants.STR_PROGRESSDATE).value = value[`${constants.STR_PROGRESSDATE}`];
+        newRow.getCell(constants.STR_PROGRESSTIME).value = value[`${constants.STR_PROGRESSTIME}`];
+        newRow.getCell(constants.STR_REVIEWDATE).value = value[`${constants.STR_REVIEWDATE}`];
+        newRow.getCell(constants.STR_REVIEWTIME).value = value[`${constants.STR_REVIEWTIME}`];
+        newRow.getCell(constants.STR_VALIDDATE).value = value[`${constants.STR_VALIDDATE}`];
+        newRow.getCell(constants.STR_VALIDTIME).value = value[`${constants.STR_VALIDTIME}`];
+        newRow.getCell(constants.STR_MERGEDATE).value = value[`${constants.STR_MERGEDATE}`];
+        newRow.getCell(constants.STR_MERGETIME).value = value[`${constants.STR_MERGETIME}`];
+        newRow.getCell(constants.STR_FINALCDATE).value = value[`${constants.STR_FINALCDATE}`];
+        newRow.getCell(constants.STR_FINALCTIME).value = value[`${constants.STR_FINALCTIME}`];
+        newRow.getCell(constants.STR_DONEDATE).value = value[`${constants.STR_DONEDATE}`];
+        newRow.getCell(constants.STR_DONETIME).value = value[`${constants.STR_DONETIME}`];
+        newRow.getCell(constants.STR_CLOSEDDATE).value = value[`${constants.STR_CLOSEDDATE}`];
+        newRow.getCell(constants.STR_CLOSEDTIME).value = value[`${constants.STR_CLOSEDTIME}`];
+        newRow.getCell(constants.STR_BLOCKEDDATE).value = value[`${constants.STR_BLOCKEDDATE}`];
+        newRow.getCell(constants.STR_BLOCKEDTIME).value = value[`${constants.STR_BLOCKEDTIME}`];
+        newRow.getCell(constants.STR_REJECTEDDATE).value = value[`${constants.STR_REJECTEDDATE}`];
+        newRow.getCell(constants.STR_REJECTEDTIME).value = value[`${constants.STR_REJECTEDTIME}`];
+        newRow.getCell(constants.STR_ONHOLDDATE).value = value[`${constants.STR_ONHOLDDATE}`];
+        newRow.getCell(constants.STR_ONHOLDTIME).value = value[`${constants.STR_ONHOLDTIME}`];
+    });
+}
+const fillExcelWithCyleTimeDistribution = (distributionArray) => {
     const sheet = workbook.getWorksheet(constants.WORKSHEET_NAME);
     let index = 2;
     distributionArray.forEach(
@@ -77,7 +125,7 @@ const fillExcelWithCyleTimeDistribution = (workbook, distributionArray) => {
         }
     );
 }
-const fillExcelWithLeadTimeDistribution = (workbook, distributionArray) => {
+const fillExcelWithLeadTimeDistribution = (distributionArray) => {
     const sheet = workbook.getWorksheet(constants.WORKSHEET_NAME);
     index = 2;
     distributionArray.forEach(
@@ -89,7 +137,7 @@ const fillExcelWithLeadTimeDistribution = (workbook, distributionArray) => {
         }
     );
 }
-const fillExcelWithResolvedIssuesOnly = (workbook, issueArray) => {
+const fillExcelWithResolvedIssuesOnly = (issueArray) => {
     const sheet = workbook.getWorksheet(constants.WORKSHEET_NAME);
     let filteredColumn = issueArray.filter(value => {
         return(
@@ -128,7 +176,7 @@ const fillExcelWithResolvedIssuesOnly = (workbook, issueArray) => {
     });
 
 }
-const fillExcelWithSprintsDetails = (workbook, sprintDetails) => {
+const fillExcelWithSprintsDetails = (sprintDetails) => {
     const sheet = workbook.getWorksheet(constants.WORKSHEET_NAME);
     //skipping titles : index 2
     let indexRow = 2;
@@ -142,7 +190,7 @@ const fillExcelWithSprintsDetails = (workbook, sprintDetails) => {
         indexRow = indexRow + 1;
     }
 }
-const groupRows = (workbook) => {
+const groupRows = () => {
     const sheet = workbook.getWorksheet(constants.WORKSHEET_NAME);
     //after filling all raw metrics, split with group row
     const fillArrayTitleRow = (grp) => {
@@ -182,7 +230,7 @@ const groupRows = (workbook) => {
         };
     });
 }
-const writeExcelFile = async (workbook) => {
+const writeExcelFile = async () => {
     try {
         await workbook.xlsx.writeFile(constants.EXCEL_FILE_NAME);
     }
@@ -191,8 +239,11 @@ const writeExcelFile = async (workbook) => {
     }
 }
 
+initExcelFile();
+
 module.exports = {
     initExcelFile,
+    fileExcelWithRawIssues,
     fillExcelWithSprintsDetails,
     fillRowValueInExcel,
     fillExcelWithCyleTimeDistribution,
