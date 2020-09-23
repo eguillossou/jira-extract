@@ -77,7 +77,6 @@ const fileExcelWithRawIssues = (issueArray) => {
         newRow.getCell(constants.STR_KEY).value = value.key;
         newRow.commit();
         printInfo(`Analysing ${newRow.getCell(constants.STR_KEY).value} item`);
-        newRow.getCell(constants.STR_KEY_RESOLVED).value = value.key;
         newRow.getCell(constants.STR_CREATIONDATE).value = value.creationdate;
         newRow.getCell(constants.STR_NEWDATE).value = value.newdate;
         newRow.getCell(constants.STR_RESODATE).value = value.resolutiondate; 
@@ -189,6 +188,8 @@ const fillExcelWithSprintsDetails = (sprintDetails) => {
         fillRowValueInExcel(rowObject, constants.STR_SPRINT_STARTDATE, new Date(details.startdate).toLocaleString("fr-FR",{day:"numeric",month:"numeric",year:"numeric",hour:"numeric", minute:"numeric"}) );
         fillRowValueInExcel(rowObject, constants.STR_SPRINT_ENDDATE, new Date(details.enddate).toLocaleString("fr-FR",{day:"numeric",month:"numeric",year:"numeric",hour:"numeric", minute:"numeric"}) );
         fillRowValueInExcel(rowObject, constants.STR_SPRINT_COMPLETEDATE, new Date(details.completedate).toLocaleString("fr-FR",{day:"numeric",month:"numeric",year:"numeric",hour:"numeric", minute:"numeric"}) );
+        fillRowValueInExcel(rowObject, constants.STR_SPRINT_NBCOMPLETEDISSUES, details.completedissues );
+        fillRowValueInExcel(rowObject, constants.STR_SPRINT_NBINCOMPLETEDISSUES, details.incompletedissues );
         indexRow = indexRow + 1;
     }
 }
@@ -208,7 +209,7 @@ const groupRows = () => {
         { "title":constants.STR_GRP_RAWMETRICS_RESOLVED, "keyStart":constants.STR_KEY_RESOLVED, "keyEnd":constants.STR_CENTILE_80TH_LEADTIME, "color":"f2d9e6"},
         { "title":constants.STR_GRP_CYCLETIME_DISTRIBUTION, "keyStart":constants.STR_CYCLETIMERANGE, "keyEnd":constants.STR_CYCLETIMEDISTRIBUTION, "color":"ccffcc"},
         { "title":constants.STR_GRP_LEADTIME_DISTRIBUTION, "keyStart":constants.STR_LEADTIMERANGE, "keyEnd":constants.STR_LEADTIMEDISTRIBUTION, "color":"ccaacc"},
-        { "title":constants.STR_GRP_SPRINT, "keyStart":constants.STR_SPRINT_ID, "keyEnd":constants.STR_SPRINT_COMPLETEDATE, "color":"ccaaff"},
+        { "title":constants.STR_GRP_SPRINT, "keyStart":constants.STR_SPRINT_ID, "keyEnd":constants.STR_SPRINT_NBINCOMPLETEDISSUES, "color":"ccaaff"},
     ];
     const getCellForStyle = (_sheet, _key, _rowNumber) => {
         return(_sheet.getRow(_rowNumber).getCell(_sheet.getColumn(_key).number));

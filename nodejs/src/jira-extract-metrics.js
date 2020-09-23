@@ -121,25 +121,25 @@ const parseIssues = ( json ) => {
         }
         // CYCLE Time series is a sum of in progress/code review/validation/merge/final check time
         issueObject.cycletime = 
-            (issueObject[constants.STR_PROGRESSTIME] !== undefined ? issueObject[constants.STR_PROGRESSTIME]:0)+
-            (issueObject[constants.STR_REVIEWTIME] !== undefined ? issueObject[constants.STR_REVIEWTIME]:0)+
-            (issueObject[constants.STR_VALIDTIME] !== undefined ? issueObject[constants.STR_VALIDTIME]:0)+
-            (issueObject[constants.STR_MERGETIME] !== undefined ? issueObject[constants.STR_MERGETIME]:0)+
-            (issueObject[constants.STR_FINALCTIME] !== undefined ? issueObject[constants.STR_FINALCTIME]:0);
-
+        (issueObject[constants.STR_PROGRESSTIME] !== undefined ? issueObject[constants.STR_PROGRESSTIME]:0)+
+        (issueObject[constants.STR_REVIEWTIME] !== undefined ? issueObject[constants.STR_REVIEWTIME]:0)+
+        (issueObject[constants.STR_VALIDTIME] !== undefined ? issueObject[constants.STR_VALIDTIME]:0)+
+        (issueObject[constants.STR_MERGETIME] !== undefined ? issueObject[constants.STR_MERGETIME]:0)+
+        (issueObject[constants.STR_FINALCTIME] !== undefined ? issueObject[constants.STR_FINALCTIME]:0);
+        
         issueObject.sprintlist = issue.fields.customfield_11070.map(value => value.match("name=[^,]+")[0].replace("name=",""));
         
         internalArray.push(issueObject);
     }//end parsing issues
     return(internalArray);
 }
-// return last 10 sprints matching case "TDC Sprint XX" in closed or active state
+// Getting last ten Sprint list with start and end date
+// return last 10 sprints matching case "TDC Sprint XX" in closed
 const parseIdNameFromSprints = (json) => {
     // getting first row to fill (remove group row and header row)
     const arrSprint = [];
     const filterSprints = json.sprints.filter((sprint) => 
-    sprint.name.includes(constants.STR_EXP_FILTER_SPRINT) && 
-    ( sprint.state.includes("CLOSED") || sprint.state.includes("ACTIVE")));
+    sprint.name.includes(constants.STR_EXP_FILTER_SPRINT) && sprint.state.includes("CLOSED"));
     const lastTenSprints = filterSprints.filter((_, idx) => idx >filterSprints.length-11);
     for(let sprintNb in lastTenSprints) {
         arrSprint[sprintNb] = {
@@ -155,7 +155,7 @@ const calculateDistributionCycleTime = (internalArray) => {
     const distributionCycleTime = [];
     const step = 3;
     freqCT = freqCellColumnByKeyColumn(step,internalArray,constants.STR_RESODATE, constants.STR_CYCLETIME);
-
+    
     const maxKey = Math.max(...Object.keys(freqCT));
     for (let steps = 0; steps < maxKey + 2; steps++) {
         //jump first row <=> title
@@ -185,25 +185,21 @@ const calculateDistributionLeadTime = (internalArray) => {
 const getCompleteAndUnCompleteIssueBySprint = (issueArray,jsonSprintDetails) => {
     const frequencyComplete = [];
     issueArray.forEach( issue => {
-        jsonSprintDetails.forEach((sprint,index) => {
+        jsonSprintDetails.forEach(sprint => {
             if(!frequencyComplete.find(val => val.sprintid === sprint.id)) {
                 frequencyComplete.push(
                     {
                         sprintid : sprint.id,
-                        completed : 0,
-                        incompleted : 0
+                        completedissues : 0,
+                        incompletedissues : 0
                     });
             }
             if(issue.sprintlist.includes(sprint.name)) {
                 if(issue.resolutiondate !== undefined &&
                     new Date(issue.resolutiondate) <= new Date(sprint.enddate)) {
-                        frequencyComplete.find(v => v.sprintid === sprint.id).completed = frequencyComplete.find(v => v.sprintid === sprint.id).completed +1;
-                        printInfo("+1");
-                        printInfo(issue.key);
+                        frequencyComplete.find(v => v.sprintid === sprint.id).completedissues = frequencyComplete.find(v => v.sprintid === sprint.id).completedissues +1;
                 } else {
-                    frequencyComplete.find(v => v.sprintid === sprint.id).incompleted = frequencyComplete.find(v => v.sprintid === sprint.id).incompleted +1;
-                    printInfo("+1 incomplete");
-                    printInfo(issue.key);
+                    frequencyComplete.find(v => v.sprintid === sprint.id).incompletedissues = frequencyComplete.find(v => v.sprintid === sprint.id).incompletedissues +1;
                 }
             }
         })
@@ -218,46 +214,51 @@ const main = async () => {
         //   })
     
     try {
+        // MOCK INSIDE
         // working locally to avoid calls to http
-        const jsonIssues = { "data": JSON.parse(fs.readFileSync(path.join(__dirname,'mock/resIssues.json'), 'utf8'))}
-        const jsonSprints = { "data": JSON.parse(fs.readFileSync(path.join(__dirname,'mock/resSprints.json'), 'utf8'))}
-        const jsonSprintId = { "data": JSON.parse(fs.readFileSync(path.join(__dirname,'mock/resSprintId1772.json'), 'utf8'))}
+        // const jsonIssues = { "data": JSON.parse(fs.readFileSync(path.join(__dirname,'mock/resIssues.json'), 'utf8'))}
+        // const jsonSprints = { "data": JSON.parse(fs.readFileSync(path.join(__dirname,'mock/resSprints.json'), 'utf8'))}
+        // const jsonSprintId = { "data": JSON.parse(fs.readFileSync(path.join(__dirname,'mock/resSprintId1772.json'), 'utf8'))}
         
         // const jsonIssues = await rest.getRequest(constants.JIRA_SEARCH_URL,login, password, rest.paramAxiosIssues(constants.JIRA_QUERY));
-        // const jsonSprints = await rest.getRequest(`${constants.JIRA_GREENHOPER_URL}/${constants.TDC_JIRA_BOARD_ID}`,login, password, rest.paramAxiosSprints);
+
+        printInfo(`Getting last ten Sprint list ${new Date().toLocaleString()}`);
+        const jsonSprints = await rest.getRequest(`${constants.JIRA_GREENHOPER_URL}/${constants.TDC_JIRA_BOARD_ID}`,login, password, rest.paramAxiosSprints);
         const arrSprint = parseIdNameFromSprints(jsonSprints.data);
         let jsonSprintDetails = [];
         let jsonSprintDetail = {};
 
         for(const value of arrSprint) {
             if(value.id !== undefined) {
-                // jsonSprintDetail = await rest.getRequest(`${constants.JIRA_URL_SPRINT_BY_ID}/${value.id}`,login, password, {});
-                jsonSprintDetail = jsonSprintId;
-                // begin = jsonSprintDetail.data.startDate.slice(0,jsonSprintDetail.data.startDate.indexOf("T"));
-                // end = jsonSprintDetail.data.endDate.slice(0,jsonSprintDetail.data.endDate.indexOf("T"));
+                jsonSprintDetail = await rest.getRequest(`${constants.JIRA_URL_SPRINT_BY_ID}/${value.id}`,login, password, {});
+        // MOCK INSIDE
+        // working locally to avoid calls to http
+                // jsonSprintDetail = jsonSprintId;
                 
-                printInfo(`Working on Sprint id: ${value.id} name: ${value.name}`);
                 jsonSprintDetails.push(
-                    { 
-                        "id" : value.id,
-                        "name" : value.name,
-                        "startdate" : jsonSprintDetail.data.startDate,
-                        "enddate" : jsonSprintDetail.data.endDate,
-                        "completedate" : jsonSprintDetail.data.completeDate
-                    });
-                }
-            };
+                { 
+                    "id" : value.id,
+                    "name" : value.name,
+                    "startdate" : jsonSprintDetail.data.startDate,
+                    "enddate" : jsonSprintDetail.data.endDate,
+                    "completedate" : jsonSprintDetail.data.completeDate
+                });
+            }
+        };
             
         jql = constants.JIRA_QUERY.replace("${value}",`${jsonSprintDetails.map(v => v.id).join(', ')}`);
-        printInfo(`Start searching issues ${new Date().toUTCString()} with pagination`);
+        printInfo(`Start searching issues ${new Date().toLocaleString()} with pagination`);
         let startat = 0;
-        let maxresults = 100;
-        jsonSprintIssues = await rest.getRequest(constants.JIRA_SEARCH_URL, login, password, rest.paramAxiosIssues(jql, startat, maxresults));
-        for(let i = 1;i<=Math.floor(jsonSprintIssues.data.total/maxresults);i++) {
-            issuesPaginated = await rest.getRequest(constants.JIRA_SEARCH_URL, login, password, rest.paramAxiosIssues(jql, maxresults*i, maxresults));
-            jsonSprintIssues.data.issues = [...jsonSprintIssues.data.issues,...issuesPaginated.data.issues];
+        jsonSprintIssues = await rest.getRequest(constants.JIRA_SEARCH_URL, login, password, rest.paramAxiosIssues(jql, startat, constants.TDC_JIRA_ISSUE_PAGINATION));
+        const listFn = [];
+        for(let i = 1;i<=Math.floor(jsonSprintIssues.data.total/constants.TDC_JIRA_ISSUE_PAGINATION);i++) {
+            listFn.push(rest.getRequest(constants.JIRA_SEARCH_URL, login, password, rest.paramAxiosIssues(jql, constants.TDC_JIRA_ISSUE_PAGINATION*i, constants.TDC_JIRA_ISSUE_PAGINATION)));
         }
-        printInfo(`End searching issues ${new Date().toUTCString()}`);
+        const issuesPaginated = await Promise.all(listFn.map(fn => fn));
+        for (const response in issuesPaginated) {
+            jsonSprintIssues.data.issues = [...jsonSprintIssues.data.issues,...issuesPaginated[response].data.issues];
+        }
+        printInfo(`End searching issues ${new Date().toLocaleString()}`);
         let issueArray = parseIssues(jsonSprintIssues.data);
 
         //fill raw issues to Excel file
@@ -269,8 +270,16 @@ const main = async () => {
         //fill Resolved issue metrics in Excel file
         excel.fillExcelWithResolvedIssuesOnly(issueArray);
 
-        // let sprintCompleteAndInComplete = getCompleteAndUnCompleteIssueBySprint(issueArray,jsonSprintDetails);
-        excel.fillExcelWithSprintsDetails(jsonSprintDetails);
+        let sprintCompleteAndInComplete = getCompleteAndUnCompleteIssueBySprint(issueArray,jsonSprintDetails);
+        let jsonSprintDetailsUpdated = jsonSprintDetails.map((details,index) => 
+        (
+            {...details,
+            completedissues: sprintCompleteAndInComplete[index].completedissues, 
+            incompletedissues: sprintCompleteAndInComplete[index].incompletedissues
+            }
+        )
+        );
+        excel.fillExcelWithSprintsDetails(jsonSprintDetailsUpdated);
         excel.groupRows();
         excel.writeExcelFile();
     } catch (error) {

@@ -11,9 +11,9 @@ define("JIRA_URL_SPRINT_BY_ID","https://jira.talendforge.org/rest/agile/1.0/spri
 define("JIRA_GREENHOPER_URL",`https://jira.talendforge.org/rest/greenhopper/1.0/sprintquery`);
 define("JIRA_QUERY","project = TDC AND issuetype in (Bug, \"New Feature\", \"Work Item\") AND Sprint in (${value}) ORDER BY labels ASC, RANK");
 define("JIRA_QUERY_SPRINTS","project = TDC AND sprint in (closedSprints(),futureSprints(),openSprints())");
-define("JIRA_QUERY_SPRINT_ISSUES","project = TDC AND issuetype in (Bug, \"New Feature\", \"Work Item\") AND status changed to Done during (${value}) AND Sprint is not EMPTY ORDER BY created ASC, cf[11071] ASC, component ASC, labels ASC, RANK");
 define("STR_EXP_FILTER_SPRINT","TDC Sprint");
 define("TDC_JIRA_SPRINT_PAGINATION",30);
+define("TDC_JIRA_ISSUE_PAGINATION",100);
 
 define("EXCEL_FILE_NAME","jira-report-js-full.xlsx");
 

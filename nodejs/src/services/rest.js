@@ -39,7 +39,7 @@ const getAxiosConfig = (url, login, password, params ) => {
     )
 }
 const getRequest = async (url,login,password,params) => {
-    return(await axios(getAxiosConfig(url,login, password, params)));
+    return(axios(getAxiosConfig(url,login, password, params)));
 }
 module.exports = {
     getAxiosConfig,

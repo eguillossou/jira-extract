@@ -1,3 +1,4 @@
 dist/
 build/
 __pycache__/
+nodejs/src/jira-report-js-full.xlsx
