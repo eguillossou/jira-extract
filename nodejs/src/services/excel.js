@@ -1,6 +1,6 @@
 const constants = require('../constants')
 const percentile = require('just-percentile');
-const { printError,printInfo,consoleError } = require('../print');
+const { printInfo,consoleError } = require('../print');
 const ExcelJS = require('exceljs');
 
 const workbook = new ExcelJS.Workbook();
@@ -61,6 +61,8 @@ const initExcelFile = () => {
         {header: constants.STR_SPRINT_STARTDATE, key:constants.STR_SPRINT_STARTDATE, width: '25'},
         {header: constants.STR_SPRINT_ENDDATE, key:constants.STR_SPRINT_ENDDATE, width: '25'},
         {header: constants.STR_SPRINT_COMPLETEDATE, key:constants.STR_SPRINT_COMPLETEDATE, width: '25'},
+        {header: constants.STR_SPRINT_NBCOMPLETEDISSUES, key:constants.STR_SPRINT_NBCOMPLETEDISSUES, width: '25'},
+        {header: constants.STR_SPRINT_NBINCOMPLETEDISSUES, key:constants.STR_SPRINT_NBINCOMPLETEDISSUES, width: '25'},
     ];
 }
 const fillRowValueInExcel = (rowObject, column, value ) => {
@@ -184,9 +186,9 @@ const fillExcelWithSprintsDetails = (sprintDetails) => {
         let rowObject = sheet.getRow(indexRow);
         fillRowValueInExcel(rowObject, constants.STR_SPRINT_ID, details.id );
         fillRowValueInExcel(rowObject, constants.STR_SPRINT_NAME, details.name );
-        fillRowValueInExcel(rowObject, constants.STR_SPRINT_STARTDATE, new Date(details.startDate).toLocaleString("fr-FR",{day:"numeric",month:"numeric",year:"numeric",hour:"numeric", minute:"numeric"}) );
-        fillRowValueInExcel(rowObject, constants.STR_SPRINT_ENDDATE, new Date(details.endDate).toLocaleString("fr-FR",{day:"numeric",month:"numeric",year:"numeric",hour:"numeric", minute:"numeric"}) );
-        fillRowValueInExcel(rowObject, constants.STR_SPRINT_COMPLETEDATE, new Date(details.completeDate).toLocaleString("fr-FR",{day:"numeric",month:"numeric",year:"numeric",hour:"numeric", minute:"numeric"}) );
+        fillRowValueInExcel(rowObject, constants.STR_SPRINT_STARTDATE, new Date(details.startdate).toLocaleString("fr-FR",{day:"numeric",month:"numeric",year:"numeric",hour:"numeric", minute:"numeric"}) );
+        fillRowValueInExcel(rowObject, constants.STR_SPRINT_ENDDATE, new Date(details.enddate).toLocaleString("fr-FR",{day:"numeric",month:"numeric",year:"numeric",hour:"numeric", minute:"numeric"}) );
+        fillRowValueInExcel(rowObject, constants.STR_SPRINT_COMPLETEDATE, new Date(details.completedate).toLocaleString("fr-FR",{day:"numeric",month:"numeric",year:"numeric",hour:"numeric", minute:"numeric"}) );
         indexRow = indexRow + 1;
     }
 }

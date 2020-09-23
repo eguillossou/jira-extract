@@ -1,14 +1,16 @@
 const axios = require('axios');
 const constants = require('../constants')
 
-const paramAxiosIssues = 
-{    
-    "params": {
-        "expand":"changelog", // only accessible through get request and not in post jira api
-        "jql": constants.JIRA_QUERY,
-        "startAt":0,
-        "maxResults":500,
-    }
+const paramAxiosIssues = (jql, startat, maxresults) =>
+{    return({
+                "params": {
+                "expand":"changelog", // only accessible through get request and not in post jira api
+                "jql": jql,
+                "startAt":startat,
+                "maxResults": maxresults,
+                "fields":"created,resolutiondate,issuetype,summary,customfield_11070"
+                }
+    });
 };
 const paramAxiosSprints = 
 {    
