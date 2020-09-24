@@ -64,6 +64,7 @@ const initExcelFile = () => {
         {header: constants.STR_SPRINT_NBCOMPLETEDISSUES, key:constants.STR_SPRINT_NBCOMPLETEDISSUES, width: '25'},
         {header: constants.STR_SPRINT_NBINCOMPLETEDISSUES, key:constants.STR_SPRINT_NBINCOMPLETEDISSUES, width: '25'},
         {header: constants.STR_SPRINT_RATIOCOMPLETEDISSUES, key:constants.STR_SPRINT_RATIOCOMPLETEDISSUES, width: '25', style: { numFmt: '0%' }},
+        {header: constants.STR_SPRINT_UNPLANNED_ISSUES, key:constants.STR_SPRINT_UNPLANNED_ISSUES, width: '25'},
     ];
 }
 const fillRowValueInExcel = (rowObject, column, value ) => {
@@ -192,6 +193,7 @@ const fillExcelWithSprintsDetails = (sprintDetails) => {
         fillRowValueInExcel(rowObject, constants.STR_SPRINT_NBCOMPLETEDISSUES, details.completedissues );
         fillRowValueInExcel(rowObject, constants.STR_SPRINT_NBINCOMPLETEDISSUES, details.incompletedissues );
         fillRowValueInExcel(rowObject, constants.STR_SPRINT_RATIOCOMPLETEDISSUES, (details.completedissues/(details.incompletedissues+details.completedissues) ) );
+        fillRowValueInExcel(rowObject, constants.STR_SPRINT_UNPLANNED_ISSUES, details.unplannedissues );
         indexRow = indexRow + 1;
     }
 }

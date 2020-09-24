@@ -191,15 +191,21 @@ const getCompleteAndUnCompleteIssueBySprint = (issueArray,jsonSprintDetails) => 
                     {
                         sprintid : sprint.id,
                         completedissues : 0,
-                        incompletedissues : 0
+                        incompletedissues : 0,
+                        unplannedissues : 0
                     });
             }
             if(issue.sprintlist.includes(sprint.name)) {
+                const selectedSprint = frequencyComplete.find(v => v.sprintid === sprint.id);
+                if(issue.creationdate !== undefined &&
+                    new Date(issue.creationdate)>= new Date(sprint.startdate)) {
+                        selectedSprint.unplannedissues = selectedSprint.unplannedissues+1;
+                }
                 if(issue.resolutiondate !== undefined &&
                     new Date(issue.resolutiondate) <= new Date(sprint.enddate)) {
-                        frequencyComplete.find(v => v.sprintid === sprint.id).completedissues = frequencyComplete.find(v => v.sprintid === sprint.id).completedissues +1;
+                    selectedSprint.completedissues = selectedSprint.completedissues +1;
                 } else {
-                    frequencyComplete.find(v => v.sprintid === sprint.id).incompletedissues = frequencyComplete.find(v => v.sprintid === sprint.id).incompletedissues +1;
+                    selectedSprint.incompletedissues = selectedSprint.incompletedissues +1;
                 }
             }
         })
@@ -275,7 +281,8 @@ const main = async () => {
         (
             {...details,
             completedissues: sprintCompleteAndInComplete[index].completedissues, 
-            incompletedissues: sprintCompleteAndInComplete[index].incompletedissues
+            incompletedissues: sprintCompleteAndInComplete[index].incompletedissues,
+            unplannedissues: sprintCompleteAndInComplete[index].unplannedissues
             }
         )
         );
