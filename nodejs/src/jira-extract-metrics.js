@@ -186,23 +186,34 @@ const getCompleteAndUnCompleteIssueBySprint = (issueArray,jsonSprintDetails) => 
     const frequencyComplete = [];
     issueArray.forEach( issue => {
         jsonSprintDetails.forEach(sprint => {
-            if(!frequencyComplete.find(val => val.sprintid === sprint.id)) {
+            if(!frequencyComplete.find(val => val.id === sprint.id)) {
                 frequencyComplete.push(
                     {
-                        sprintid : sprint.id,
+                        id: sprint.id,
                         completedissues : 0,
                         incompletedissues : 0,
-                        unplannedissues : 0
+                        unplannedissues : 0,
+                        startedandcompletedissues: 0,
+                        nonstartedandcompletedissues: 0
                     });
             }
-            if(issue.sprintlist.includes(sprint.name)) {
-                const selectedSprint = frequencyComplete.find(v => v.sprintid === sprint.id);
-                if(issue.creationdate !== undefined &&
+            if( issue.sprintlist.includes(sprint.name)) {
+                const selectedSprint = frequencyComplete.find(v => v.id === sprint.id);
+                if( issue.creationdate !== undefined &&
                     new Date(issue.creationdate)>= new Date(sprint.startdate)) {
                         selectedSprint.unplannedissues = selectedSprint.unplannedissues+1;
                 }
-                if(issue.resolutiondate !== undefined &&
-                    new Date(issue.resolutiondate) <= new Date(sprint.enddate)) {
+                if( issue[constants.STR_PROGRESSDATE] !== undefined &&
+                    issue.resolutiondate !== undefined &&
+                    new Date(issue.resolutiondate)<= new Date(sprint.enddate)) {
+                    if( new Date(issue[constants.STR_PROGRESSDATE])>= new Date(sprint.startdate)) {
+                        selectedSprint.startedandcompletedissues = selectedSprint.startedandcompletedissues+1;
+                    } else {
+                        selectedSprint.nonstartedandcompletedissues = selectedSprint.nonstartedandcompletedissues+1;
+                    }
+                }
+                if( issue.resolutiondate !== undefined &&
+                new Date(issue.resolutiondate) <= new Date(sprint.enddate)) {
                     selectedSprint.completedissues = selectedSprint.completedissues +1;
                 } else {
                     selectedSprint.incompletedissues = selectedSprint.incompletedissues +1;
@@ -220,26 +231,30 @@ const main = async () => {
         //   })
     
     try {
+        let jsonSprints = {};
         // MOCK INSIDE
+        let isMock = false;
         // working locally to avoid calls to http
-        // const jsonIssues = { "data": JSON.parse(fs.readFileSync(path.join(__dirname,'mock/resIssues.json'), 'utf8'))}
-        // const jsonSprints = { "data": JSON.parse(fs.readFileSync(path.join(__dirname,'mock/resSprints.json'), 'utf8'))}
-        // const jsonSprintId = { "data": JSON.parse(fs.readFileSync(path.join(__dirname,'mock/resSprintId1772.json'), 'utf8'))}
+        if(isMock) {
+            jsonSprints = { "data": JSON.parse(fs.readFileSync(path.join(__dirname,'mock/resSprints.json'), 'utf8'))}
+        } else {
+            printInfo(`Getting last ten Sprint list ${new Date().toLocaleString()}`);
+            jsonSprints = await rest.getRequest(`${constants.JIRA_GREENHOPER_URL}/${constants.TDC_JIRA_BOARD_ID}`,login, password, rest.paramAxiosSprints);
+        }
         
-        // const jsonIssues = await rest.getRequest(constants.JIRA_SEARCH_URL,login, password, rest.paramAxiosIssues(constants.JIRA_QUERY));
-
-        printInfo(`Getting last ten Sprint list ${new Date().toLocaleString()}`);
-        const jsonSprints = await rest.getRequest(`${constants.JIRA_GREENHOPER_URL}/${constants.TDC_JIRA_BOARD_ID}`,login, password, rest.paramAxiosSprints);
         const arrSprint = parseIdNameFromSprints(jsonSprints.data);
         let jsonSprintDetails = [];
         let jsonSprintDetail = {};
-
+        
         for(const value of arrSprint) {
             if(value.id !== undefined) {
-                jsonSprintDetail = await rest.getRequest(`${constants.JIRA_URL_SPRINT_BY_ID}/${value.id}`,login, password, {});
-        // MOCK INSIDE
-        // working locally to avoid calls to http
-                // jsonSprintDetail = jsonSprintId;
+                // MOCK INSIDE
+                // working locally to avoid calls to http
+                if(isMock) {
+                    jsonSprintDetail = { "data": JSON.parse(fs.readFileSync(path.join(__dirname,'mock/resSprintId1772.json'), 'utf8'))};
+                } else {
+                    jsonSprintDetail = await rest.getRequest(`${constants.JIRA_URL_SPRINT_BY_ID}/${value.id}`,login, password, {});
+                }
                 
                 jsonSprintDetails.push(
                 { 
@@ -251,42 +266,48 @@ const main = async () => {
                 });
             }
         };
-            
-        jql = constants.JIRA_QUERY.replace("${value}",`${jsonSprintDetails.map(v => v.id).join(', ')}`);
-        printInfo(`Start searching issues ${new Date().toLocaleString()} with pagination`);
-        let startat = 0;
-        jsonSprintIssues = await rest.getRequest(constants.JIRA_SEARCH_URL, login, password, rest.paramAxiosIssues(jql, startat, constants.TDC_JIRA_ISSUE_PAGINATION));
-        const listFn = [];
-        for(let i = 1;i<=Math.floor(jsonSprintIssues.data.total/constants.TDC_JIRA_ISSUE_PAGINATION);i++) {
-            listFn.push(rest.getRequest(constants.JIRA_SEARCH_URL, login, password, rest.paramAxiosIssues(jql, constants.TDC_JIRA_ISSUE_PAGINATION*i, constants.TDC_JIRA_ISSUE_PAGINATION)));
+        
+        let jsonSprintIssues = {};
+        if(isMock) {
+             jsonSprintIssues = { "data": JSON.parse(fs.readFileSync(path.join(__dirname,'mock/resIssues.json'), 'utf8'))}
+        } else {
+            jql = constants.JIRA_QUERY.replace("${value}",`${jsonSprintDetails.map(v => v.id).join(', ')}`);
+            printInfo(`Start searching issues ${new Date().toLocaleString()} with pagination`);
+            let startat = 0;
+            jsonSprintIssues = await rest.getRequest(constants.JIRA_SEARCH_URL, login, password, rest.paramAxiosIssues(jql, startat, constants.TDC_JIRA_ISSUE_PAGINATION));
+            const listFn = [];
+            for(let i = 1;i<=Math.floor(jsonSprintIssues.data.total/constants.TDC_JIRA_ISSUE_PAGINATION);i++) {
+                listFn.push(rest.getRequest(constants.JIRA_SEARCH_URL, login, password, rest.paramAxiosIssues(jql, constants.TDC_JIRA_ISSUE_PAGINATION*i, constants.TDC_JIRA_ISSUE_PAGINATION)));
+            }
+            const issuesPaginated = await Promise.all(listFn.map(fn => fn));
+            for (const response in issuesPaginated) {
+                jsonSprintIssues.data.issues = [...jsonSprintIssues.data.issues,...issuesPaginated[response].data.issues];
+            }
+            printInfo(`End searching issues ${new Date().toLocaleString()}`);
         }
-        const issuesPaginated = await Promise.all(listFn.map(fn => fn));
-        for (const response in issuesPaginated) {
-            jsonSprintIssues.data.issues = [...jsonSprintIssues.data.issues,...issuesPaginated[response].data.issues];
-        }
-        printInfo(`End searching issues ${new Date().toLocaleString()}`);
         let issueArray = parseIssues(jsonSprintIssues.data);
 
         //fill raw issues to Excel file
         excel.fileExcelWithRawIssues(issueArray);
+
+        const filterSprints = (item) => {
+            return(item.sprintlist.includes(jsonSprintDetails[jsonSprintDetails.length-1].name) ||
+            item.sprintlist.includes(jsonSprintDetails[jsonSprintDetails.length-2].name) || 
+            item.sprintlist.includes(jsonSprintDetails[jsonSprintDetails.length-3].name));
+        };
+        const issuesFromThreeLastSprintOnly = issueArray.filter((item) => filterSprints(item));
         //fill Distribution Cycle time in Excel file
-        excel.fillExcelWithCyleTimeDistribution(calculateDistributionCycleTime(issueArray));
+        excel.fillExcelWithCyleTimeDistribution(calculateDistributionCycleTime(issuesFromThreeLastSprintOnly));
         //fill Distribution Lead time in Excel file
-        excel.fillExcelWithLeadTimeDistribution(calculateDistributionLeadTime(issueArray));
+        excel.fillExcelWithLeadTimeDistribution(calculateDistributionLeadTime(issuesFromThreeLastSprintOnly));
         //fill Resolved issue metrics in Excel file
-        excel.fillExcelWithResolvedIssuesOnly(issueArray);
+        excel.fillExcelWithResolvedIssuesOnly(issuesFromThreeLastSprintOnly);
 
         let sprintCompleteAndInComplete = getCompleteAndUnCompleteIssueBySprint(issueArray,jsonSprintDetails);
-        let jsonSprintDetailsUpdated = jsonSprintDetails.map((details,index) => 
-        (
-            {...details,
-            completedissues: sprintCompleteAndInComplete[index].completedissues, 
-            incompletedissues: sprintCompleteAndInComplete[index].incompletedissues,
-            unplannedissues: sprintCompleteAndInComplete[index].unplannedissues
-            }
-        )
-        );
-        excel.fillExcelWithSprintsDetails(jsonSprintDetailsUpdated);
+
+        const sprintCompleteAndInCompleteUpdated = sprintCompleteAndInComplete.map(({id, ...good}) => good );
+        const jsonSprintDetailsUpdate  = jsonSprintDetails.map((item,index) => item = {...item, ...sprintCompleteAndInCompleteUpdated[index]})
+        excel.fillExcelWithSprintsDetails(jsonSprintDetailsUpdate);
         excel.groupRows();
         excel.writeExcelFile();
     } catch (error) {

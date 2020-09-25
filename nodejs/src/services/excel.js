@@ -65,6 +65,8 @@ const initExcelFile = () => {
         {header: constants.STR_SPRINT_NBINCOMPLETEDISSUES, key:constants.STR_SPRINT_NBINCOMPLETEDISSUES, width: '25'},
         {header: constants.STR_SPRINT_RATIOCOMPLETEDISSUES, key:constants.STR_SPRINT_RATIOCOMPLETEDISSUES, width: '25', style: { numFmt: '0%' }},
         {header: constants.STR_SPRINT_UNPLANNED_ISSUES, key:constants.STR_SPRINT_UNPLANNED_ISSUES, width: '25'},
+        {header: constants.STR_SPRINT_STARTED_AND_COMPLETED_ISSUES, key:constants.STR_SPRINT_STARTED_AND_COMPLETED_ISSUES, width: '30'},
+        {header: constants.STR_SPRINT_NON_STARTED_AND_COMPLETED_ISSUES, key:constants.STR_SPRINT_NON_STARTED_AND_COMPLETED_ISSUES, width: '30'},
     ];
 }
 const fillRowValueInExcel = (rowObject, column, value ) => {
@@ -192,8 +194,10 @@ const fillExcelWithSprintsDetails = (sprintDetails) => {
         fillRowValueInExcel(rowObject, constants.STR_SPRINT_COMPLETEDATE, new Date(details.completedate).toLocaleString("fr-FR",{day:"numeric",month:"numeric",year:"numeric",hour:"numeric", minute:"numeric"}) );
         fillRowValueInExcel(rowObject, constants.STR_SPRINT_NBCOMPLETEDISSUES, details.completedissues );
         fillRowValueInExcel(rowObject, constants.STR_SPRINT_NBINCOMPLETEDISSUES, details.incompletedissues );
-        fillRowValueInExcel(rowObject, constants.STR_SPRINT_RATIOCOMPLETEDISSUES, (details.completedissues/(details.incompletedissues+details.completedissues) ) );
+        fillRowValueInExcel(rowObject, constants.STR_SPRINT_RATIOCOMPLETEDISSUES, details.incompletedissues+details.completedissues !== 0 ?(details.completedissues/(details.incompletedissues+details.completedissues) ):1 );
         fillRowValueInExcel(rowObject, constants.STR_SPRINT_UNPLANNED_ISSUES, details.unplannedissues );
+        fillRowValueInExcel(rowObject, constants.STR_SPRINT_STARTED_AND_COMPLETED_ISSUES, details.startedandcompletedissues );
+        fillRowValueInExcel(rowObject, constants.STR_SPRINT_NON_STARTED_AND_COMPLETED_ISSUES, details.nonstartedandcompletedissues );
         indexRow = indexRow + 1;
     }
 }
@@ -213,7 +217,7 @@ const groupRows = () => {
         { "title":constants.STR_GRP_RAWMETRICS_RESOLVED, "keyStart":constants.STR_KEY_RESOLVED, "keyEnd":constants.STR_CENTILE_80TH_LEADTIME, "color":"f2d9e6"},
         { "title":constants.STR_GRP_CYCLETIME_DISTRIBUTION, "keyStart":constants.STR_CYCLETIMERANGE, "keyEnd":constants.STR_CYCLETIMEDISTRIBUTION, "color":"ccffcc"},
         { "title":constants.STR_GRP_LEADTIME_DISTRIBUTION, "keyStart":constants.STR_LEADTIMERANGE, "keyEnd":constants.STR_LEADTIMEDISTRIBUTION, "color":"ccaacc"},
-        { "title":constants.STR_GRP_SPRINT, "keyStart":constants.STR_SPRINT_ID, "keyEnd":constants.STR_SPRINT_RATIOCOMPLETEDISSUES, "color":"ccaaff"},
+        { "title":constants.STR_GRP_SPRINT, "keyStart":constants.STR_SPRINT_ID, "keyEnd":constants.STR_SPRINT_NON_STARTED_AND_COMPLETED_ISSUES, "color":"ccaaff"},
     ];
     const getCellForStyle = (_sheet, _key, _rowNumber) => {
         return(_sheet.getRow(_rowNumber).getCell(_sheet.getColumn(_key).number));

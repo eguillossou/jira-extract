@@ -77,6 +77,8 @@ define("STR_SPRINT_NBCOMPLETEDISSUES","Sprint completed issues");
 define("STR_SPRINT_NBINCOMPLETEDISSUES","Sprint incompleted issues");
 define("STR_SPRINT_RATIOCOMPLETEDISSUES","Completed issues ratio");
 define("STR_SPRINT_UNPLANNED_ISSUES","Unplanned issues");
+define("STR_SPRINT_STARTED_AND_COMPLETED_ISSUES","Started and completed issues");
+define("STR_SPRINT_NON_STARTED_AND_COMPLETED_ISSUES","Non Started and completed issues");
 
 define("STR_GRP_RAWMETRICS","Raw metrics")
 define("STR_GRP_RAWMETRICS_RESOLVED","Raw metrics resolved issues only")
