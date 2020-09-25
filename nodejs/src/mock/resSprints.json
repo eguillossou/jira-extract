@@ -1,400 +1,401 @@
 {
-  "sprints": [
-  {
-  "id": 353,
-  "sequence": 353,
-  "name": "Sprint 5",
-  "state": "CLOSED"
-  },
-  {
-  "id": 453,
-  "sequence": 453,
-  "name": "TDC Sprint 0",
-  "state": "CLOSED"
-  },
-  {
-  "id": 454,
-  "sequence": 454,
-  "name": "TDC Sprint 1",
-  "state": "CLOSED"
-  },
-  {
-  "id": 473,
-  "sequence": 473,
-  "name": "TDC Sprint 2",
-  "state": "CLOSED"
-  },
-  {
-  "id": 524,
-  "sequence": 524,
-  "name": "TDC Sprint 3",
-  "state": "CLOSED"
-  },
-  {
-  "id": 529,
-  "sequence": 529,
-  "name": "TDC Sprint 4",
-  "state": "CLOSED"
-  },
-  {
-  "id": 542,
-  "sequence": 534,
-  "name": "Sprint 17ST",
-  "state": "CLOSED"
-  },
-  {
-  "id": 543,
-  "sequence": 543,
-  "name": "TDC Sprint 5",
-  "state": "CLOSED"
-  },
-  {
-  "id": 544,
-  "sequence": 544,
-  "name": "TDC Sprint 6",
-  "state": "CLOSED"
-  },
-  {
-  "id": 581,
-  "sequence": 581,
-  "name": "TDC Sprint 7",
-  "state": "CLOSED"
-  },
-  {
-  "id": 599,
-  "sequence": 599,
-  "name": "TDC Sprint 8",
-  "state": "CLOSED"
-  },
-  {
-  "id": 601,
-  "sequence": 601,
-  "name": "TDC Sprint 9",
-  "state": "CLOSED"
-  },
-  {
-  "id": 635,
-  "sequence": 635,
-  "name": "TDC Sprint 10",
-  "state": "CLOSED"
-  },
-  {
-  "id": 636,
-  "sequence": 636,
-  "name": "TDC Sprint 11",
-  "state": "CLOSED"
-  },
-  {
-  "id": 637,
-  "sequence": 637,
-  "name": "TDC Sprint 12",
-  "state": "CLOSED"
-  },
-  {
-  "id": 638,
-  "sequence": 638,
-  "name": "TDC Sprint 13",
-  "state": "CLOSED"
-  },
-  {
-  "id": 639,
-  "sequence": 639,
-  "name": "TDC Sprint 14",
-  "state": "CLOSED"
-  },
-  {
-  "id": 682,
-  "sequence": 682,
-  "name": "TDC Sprint 15",
-  "state": "CLOSED"
-  },
-  {
-  "id": 683,
-  "sequence": 683,
-  "name": "TDC Sprint 16",
-  "state": "CLOSED"
-  },
-  {
-  "id": 818,
-  "sequence": 692,
-  "name": "TDC Sprint 17",
-  "state": "CLOSED"
-  },
-  {
-  "id": 694,
-  "sequence": 693,
-  "name": "TDC Sprint 18",
-  "state": "CLOSED"
-  },
-  {
-  "id": 798,
-  "sequence": 694,
-  "name": "TDC Sprint 19",
-  "state": "CLOSED",
-  "goal": ""
-  },
-  {
-  "id": 801,
-  "sequence": 784,
-  "name": "TDC Sprint 20",
-  "state": "CLOSED",
-  "goal": "Leverage streaming for sample processing"
-  },
-  {
-  "id": 947,
-  "sequence": 798,
-  "name": "TDC Sprint 21",
-  "state": "CLOSED",
-  "goal": "[Nov 2, Nov 22]"
-  },
-  {
-  "id": 961,
-  "sequence": 801,
-  "name": "TDC Sprint 22",
-  "state": "CLOSED",
-  "goal": "[Nov 23, Dec 13]"
-  },
-  {
-  "id": 974,
-  "sequence": 818,
-  "name": "TDC Sprint 23",
-  "state": "CLOSED",
-  "goal": "[Dec 14, Jan 3]"
-  },
-  {
-  "id": 1098,
-  "sequence": 961,
-  "name": "TDC Sprint 24",
-  "state": "CLOSED",
-  "goal": "[Jan 4, Jan 24]"
-  },
-  {
-  "id": 976,
-  "sequence": 974,
-  "name": "TDC Sprint 25",
-  "state": "CLOSED",
-  "goal": "[Jan 25, Feb 14]"
-  },
-  {
-  "id": 999,
-  "sequence": 976,
-  "name": "TDC Sprint 26",
-  "state": "CLOSED",
-  "goal": "[Apr 5, Apr 25]"
-  },
-  {
-  "id": 1125,
-  "sequence": 999,
-  "name": "TDC Sprint 27",
-  "state": "CLOSED",
-  "goal": "[Apr 26, May 16]"
-  },
-  {
-  "id": 1173,
-  "sequence": 1055,
-  "name": "TDC Sprint 28",
-  "state": "CLOSED",
-  "goal": "[May 17, Jun 6]"
-  },
-  {
-  "id": 1176,
-  "sequence": 1056,
-  "name": "TDC Sprint 29",
-  "state": "CLOSED",
-  "goal": "[Jun 11, Jun 27]"
-  },
-  {
-  "id": 1280,
-  "sequence": 1125,
-  "name": "TDC Sprint 30",
-  "state": "CLOSED",
-  "goal": "[Jun 28, Jul 18]"
-  },
-  {
-  "id": 1321,
-  "sequence": 1158,
-  "name": "TDC Sprint 31",
-  "state": "CLOSED",
-  "goal": "[Jul 19, Aug 8]"
-  },
-  {
-  "id": 1358,
-  "sequence": 1173,
-  "name": "TDC Sprint 32",
-  "state": "CLOSED",
-  "goal": "Prep intégration (Prep creation and Impact analysis on datasets) + TSBI"
-  },
-  {
-  "id": 1360,
-  "sequence": 1280,
-  "name": "TDC Sprint 33",
-  "state": "CLOSED",
-  "goal": "[Aug 30, Sep 19] TSBI, Data AM and Prep integration"
-  },
-  {
-  "id": 1420,
-  "sequence": 1321,
-  "name": "TDC Sprint 34",
-  "state": "CLOSED",
-  "goal": "[Sep 20, Oct 10] Prep integration, Faceted search, Local connection and kickoff"
-  },
-  {
-  "id": 1422,
-  "sequence": 1358,
-  "name": "TDC Sprint 35",
-  "state": "CLOSED",
-  "goal": "[Oct 11, Oct 31] Custom Attributes , Local connection"
-  },
-  {
-  "id": 1423,
-  "sequence": 1360,
-  "name": "TDC Sprint 36",
-  "state": "CLOSED",
-  "goal": "[Nov 1, Nov 21] Local connection, Custom attributes, overview"
-  },
-  {
-  "id": 1424,
-  "sequence": 1420,
-  "name": "TDC Sprint 37",
-  "state": "CLOSED",
-  "goal": "[Nov 22, Dec 12]"
-  },
-  {
-  "id": 1460,
-  "sequence": 1422,
-  "name": "TDC Sprint 38",
-  "state": "CLOSED",
-  "goal": "[Dec 13, Jan 2]"
-  },
-  {
-  "id": 1461,
-  "sequence": 1423,
-  "name": "TDC Sprint 39",
-  "state": "CLOSED",
-  "goal": "[Jan 3, Jan 23] Local connection, TDP Migration, Inventory Application"
-  },
-  {
-  "id": 1486,
-  "sequence": 1424,
-  "name": "TDC Sprint 40",
-  "state": "CLOSED",
-  "goal": "[Jan 24, Feb 13] EAP, Custom Attributes, Overview, Inventory App"
-  },
-  {
-  "id": 1567,
-  "sequence": 1460,
-  "name": "TDC Sprint 41",
-  "state": "CLOSED",
-  "goal": "[Feb 14, Mar 5]"
-  },
-  {
-  "id": 1569,
-  "sequence": 1461,
-  "name": "TDC Sprint 42",
-  "state": "CLOSED",
-  "goal": "[Mar 6, Mar 26]"
-  },
-  {
-  "id": 1617,
-  "sequence": 1486,
-  "name": "TDC Sprint 43",
-  "state": "CLOSED",
-  "goal": "[Mar 31, Apr 16] Prepare GA, Guided Tour, Enrich Faceted search, Update overview flow"
-  },
-  {
-  "id": 1656,
-  "sequence": 1556,
-  "name": "TDC Sprint 44",
-  "state": "CLOSED",
-  "goal": "[Apr 21, May 7] Data Prep migration support, Enrich Overview, GA support"
-  },
-  {
-  "id": 1657,
-  "sequence": 1567,
-  "name": "TDC Sprint 45",
-  "state": "CLOSED",
-  "goal": "[May 12, May 28] IPC, Azure, Tags management"
-  },
-  {
-  "id": 1682,
-  "sequence": 1569,
-  "name": "TDC Sprint 46",
-  "state": "CLOSED",
-  "goal": "[Jun 2, Jun 19] IPC, Tag management, Blacklist, list existing prep and pipeline in overview"
-  },
-  {
-  "id": 1713,
-  "sequence": 1617,
-  "name": "TDC Sprint 47",
-  "state": "CLOSED",
-  "goal": "[Jun 22, Jul 9]  Faceted search (url, trustscore), API Pagination, Eng TCK migration"
-  },
-  {
-  "id": 1738,
-  "sequence": 1657,
-  "name": "TDC Sprint 48",
-  "state": "CLOSED",
-  "goal": "[Jul 14, Jul 30] Trustscore formula part 1, eng TCK migration"
-  },
-  {
-  "id": 1762,
-  "sequence": 1682,
-  "name": "TDC Sprint 49",
-  "state": "CLOSED",
-  "goal": "[Aug 4, Aug 20] Trustscore (use v1 formula), front pagination"
-  },
-  {
-  "id": 1772,
-  "sequence": 1713,
-  "name": "TDC Sprint 50",
-  "state": "CLOSED",
-  "goal": "[Aug 25, Sep 10] Trustscore V2, Trustscore Dataviz"
-  },
-  {
-  "id": 1556,
-  "sequence": 1656,
-  "name": "inter-sprint transition",
-  "state": "FUTURE"
-  },
-  {
-  "id": 1773,
-  "sequence": 1738,
-  "name": "TDC Sprint 51",
-  "state": "ACTIVE",
-  "goal": "[15 Sep, 1 Oct] Snowflake, Trustscore dataviz , Tacokit, TDS in TDP"
-  },
-  {
-  "id": 1804,
-  "sequence": 1762,
-  "name": "TDC Sprint 52",
-  "state": "FUTURE",
-  "goal": "[6 Oct, 22 Oct]"
-  },
-  {
-  "id": 692,
-  "sequence": 1772,
-  "name": "[Tech debt]",
-  "state": "FUTURE"
-  },
-  {
-  "id": 784,
-  "sequence": 1773,
-  "name": "[Waiting for others]",
-  "state": "FUTURE"
-  },
-  {
-  "id": 693,
-  "sequence": 1804,
-  "name": "[Quality debt]",
-  "state": "FUTURE"
-  },
-  {
-  "id": 1816,
-  "sequence": 1816,
-  "name": "Improvements",
-  "state": "FUTURE",
-  "goal": "List of all retrospectives actions"
-  }
-  ],
-  "rapidViewId": 217
-  }
+    "sprints": [
+        {
+            "id": 453,
+            "sequence": 453,
+            "name": "TDC Sprint 0",
+            "state": "CLOSED"
+        },
+        {
+            "id": 454,
+            "sequence": 454,
+            "name": "TDC Sprint 1",
+            "state": "CLOSED"
+        },
+        {
+            "id": 473,
+            "sequence": 473,
+            "name": "TDC Sprint 2",
+            "state": "CLOSED"
+        },
+        {
+            "id": 524,
+            "sequence": 524,
+            "name": "TDC Sprint 3",
+            "state": "CLOSED"
+        },
+        {
+            "id": 529,
+            "sequence": 529,
+            "name": "TDC Sprint 4",
+            "state": "CLOSED"
+        },
+        {
+            "id": 542,
+            "sequence": 534,
+            "name": "Sprint 17ST",
+            "state": "CLOSED"
+        },
+        {
+            "id": 543,
+            "sequence": 543,
+            "name": "TDC Sprint 5",
+            "state": "CLOSED"
+        },
+        {
+            "id": 544,
+            "sequence": 544,
+            "name": "TDC Sprint 6",
+            "state": "CLOSED"
+        },
+        {
+            "id": 581,
+            "sequence": 581,
+            "name": "TDC Sprint 7",
+            "state": "CLOSED"
+        },
+        {
+            "id": 599,
+            "sequence": 599,
+            "name": "TDC Sprint 8",
+            "state": "CLOSED"
+        },
+        {
+            "id": 601,
+            "sequence": 601,
+            "name": "TDC Sprint 9",
+            "state": "CLOSED"
+        },
+        {
+            "id": 635,
+            "sequence": 635,
+            "name": "TDC Sprint 10",
+            "state": "CLOSED"
+        },
+        {
+            "id": 636,
+            "sequence": 636,
+            "name": "TDC Sprint 11",
+            "state": "CLOSED"
+        },
+        {
+            "id": 637,
+            "sequence": 637,
+            "name": "TDC Sprint 12",
+            "state": "CLOSED"
+        },
+        {
+            "id": 638,
+            "sequence": 638,
+            "name": "TDC Sprint 13",
+            "state": "CLOSED"
+        },
+        {
+            "id": 639,
+            "sequence": 639,
+            "name": "TDC Sprint 14",
+            "state": "CLOSED"
+        },
+        {
+            "id": 682,
+            "sequence": 682,
+            "name": "TDC Sprint 15",
+            "state": "CLOSED"
+        },
+        {
+            "id": 683,
+            "sequence": 683,
+            "name": "TDC Sprint 16",
+            "state": "CLOSED"
+        },
+        {
+            "id": 818,
+            "sequence": 692,
+            "name": "TDC Sprint 17",
+            "state": "CLOSED"
+        },
+        {
+            "id": 694,
+            "sequence": 693,
+            "name": "TDC Sprint 18",
+            "state": "CLOSED"
+        },
+        {
+            "id": 798,
+            "sequence": 694,
+            "name": "TDC Sprint 19",
+            "state": "CLOSED",
+            "goal": ""
+        },
+        {
+            "id": 801,
+            "sequence": 784,
+            "name": "TDC Sprint 20",
+            "state": "CLOSED",
+            "goal": "Leverage streaming for sample processing"
+        },
+        {
+            "id": 947,
+            "sequence": 798,
+            "name": "TDC Sprint 21",
+            "state": "CLOSED",
+            "goal": "[Nov 2, Nov 22]"
+        },
+        {
+            "id": 961,
+            "sequence": 801,
+            "name": "TDC Sprint 22",
+            "state": "CLOSED",
+            "goal": "[Nov 23, Dec 13]"
+        },
+        {
+            "id": 974,
+            "sequence": 818,
+            "name": "TDC Sprint 23",
+            "state": "CLOSED",
+            "goal": "[Dec 14, Jan 3]"
+        },
+        {
+            "id": 1098,
+            "sequence": 961,
+            "name": "TDC Sprint 24",
+            "state": "CLOSED",
+            "goal": "[Jan 4, Jan 24]"
+        },
+        {
+            "id": 976,
+            "sequence": 974,
+            "name": "TDC Sprint 25",
+            "state": "CLOSED",
+            "goal": "[Jan 25, Feb 14]"
+        },
+        {
+            "id": 999,
+            "sequence": 976,
+            "name": "TDC Sprint 26",
+            "state": "CLOSED",
+            "goal": "[Apr 5, Apr 25]"
+        },
+        {
+            "id": 1125,
+            "sequence": 999,
+            "name": "TDC Sprint 27",
+            "state": "CLOSED",
+            "goal": "[Apr 26, May 16]"
+        },
+        {
+            "id": 1173,
+            "sequence": 1055,
+            "name": "TDC Sprint 28",
+            "state": "CLOSED",
+            "goal": "[May 17, Jun 6]"
+        },
+        {
+            "id": 1176,
+            "sequence": 1056,
+            "name": "TDC Sprint 29",
+            "state": "CLOSED",
+            "goal": "[Jun 11, Jun 27]"
+        },
+        {
+            "id": 1280,
+            "sequence": 1125,
+            "name": "TDC Sprint 30",
+            "state": "CLOSED",
+            "goal": "[Jun 28, Jul 18]"
+        },
+        {
+            "id": 1321,
+            "sequence": 1158,
+            "name": "TDC Sprint 31",
+            "state": "CLOSED",
+            "goal": "[Jul 19, Aug 8]"
+        },
+        {
+            "id": 1358,
+            "sequence": 1173,
+            "name": "TDC Sprint 32",
+            "state": "CLOSED",
+            "goal": "Prep intégration (Prep creation and Impact analysis on datasets) + TSBI"
+        },
+        {
+            "id": 1360,
+            "sequence": 1280,
+            "name": "TDC Sprint 33",
+            "state": "CLOSED",
+            "goal": "[Aug 30, Sep 19] TSBI, Data AM and Prep integration"
+        },
+        {
+            "id": 1420,
+            "sequence": 1321,
+            "name": "TDC Sprint 34",
+            "state": "CLOSED",
+            "goal": "[Sep 20, Oct 10] Prep integration, Faceted search, Local connection and kickoff"
+        },
+        {
+            "id": 1422,
+            "sequence": 1358,
+            "name": "TDC Sprint 35",
+            "state": "CLOSED",
+            "goal": "[Oct 11, Oct 31] Custom Attributes , Local connection"
+        },
+        {
+            "id": 1423,
+            "sequence": 1360,
+            "name": "TDC Sprint 36",
+            "state": "CLOSED",
+            "goal": "[Nov 1, Nov 21] Local connection, Custom attributes, overview"
+        },
+        {
+            "id": 1424,
+            "sequence": 1420,
+            "name": "TDC Sprint 37",
+            "state": "CLOSED",
+            "goal": "[Nov 22, Dec 12]"
+        },
+        {
+            "id": 1460,
+            "sequence": 1422,
+            "name": "TDC Sprint 38",
+            "state": "CLOSED",
+            "goal": "[Dec 13, Jan 2]"
+        },
+        {
+            "id": 1461,
+            "sequence": 1423,
+            "name": "TDC Sprint 39",
+            "state": "CLOSED",
+            "goal": "[Jan 3, Jan 23] Local connection, TDP Migration, Inventory Application"
+        },
+        {
+            "id": 1486,
+            "sequence": 1424,
+            "name": "TDC Sprint 40",
+            "state": "CLOSED",
+            "goal": "[Jan 24, Feb 13] EAP, Custom Attributes, Overview, Inventory App"
+        },
+        {
+            "id": 1567,
+            "sequence": 1460,
+            "name": "TDC Sprint 41",
+            "state": "CLOSED",
+            "goal": "[Feb 14, Mar 5]"
+        },
+        {
+            "id": 1569,
+            "sequence": 1461,
+            "name": "TDC Sprint 42",
+            "state": "CLOSED",
+            "goal": "[Mar 6, Mar 26]"
+        },
+        {
+            "id": 1617,
+            "sequence": 1486,
+            "name": "TDC Sprint 43",
+            "state": "CLOSED",
+            "goal": "[Mar 31, Apr 16] Prepare GA, Guided Tour, Enrich Faceted search, Update overview flow"
+        },
+        {
+            "id": 1656,
+            "sequence": 1556,
+            "name": "TDC Sprint 44",
+            "state": "CLOSED",
+            "goal": "[Apr 21, May 7] Data Prep migration support, Enrich Overview, GA support"
+        },
+        {
+            "id": 1657,
+            "sequence": 1567,
+            "name": "TDC Sprint 45",
+            "state": "CLOSED",
+            "goal": "[May 12, May 28] IPC, Azure, Tags management"
+        },
+        {
+            "id": 1682,
+            "sequence": 1569,
+            "name": "TDC Sprint 46",
+            "state": "CLOSED",
+            "goal": "[Jun 2, Jun 19] IPC, Tag management, Blacklist, list existing prep and pipeline in overview"
+        },
+        {
+            "id": 1713,
+            "sequence": 1617,
+            "name": "TDC Sprint 47",
+            "state": "CLOSED",
+            "goal": "[Jun 22, Jul 9]  Faceted search (url, trustscore), API Pagination, Eng TCK migration"
+        },
+        {
+            "id": 1738,
+            "sequence": 1657,
+            "name": "TDC Sprint 48",
+            "state": "CLOSED",
+            "goal": "[Jul 14, Jul 30] Trustscore formula part 1, eng TCK migration"
+        },
+        {
+            "id": 1762,
+            "sequence": 1682,
+            "name": "TDC Sprint 49",
+            "state": "CLOSED",
+            "goal": "[Aug 4, Aug 20] Trustscore (use v1 formula), front pagination"
+        },
+        {
+            "id": 1772,
+            "sequence": 1713,
+            "name": "TDC Sprint 50",
+            "state": "CLOSED",
+            "goal": "[Aug 25, Sep 10] Trustscore V2, Trustscore Dataviz"
+        },
+        {
+            "id": 1773,
+            "sequence": 1738,
+            "name": "TDC Sprint 51",
+            "state": "ACTIVE",
+            "goal": "[15 Sep, 1 Oct] Snowflake, Trustscore dataviz , Tacokit, TDS in TDP"
+        },
+        {
+            "id": 1556,
+            "sequence": 1656,
+            "name": "inter-sprint transition",
+            "state": "FUTURE"
+        },
+        {
+            "id": 1804,
+            "sequence": 1762,
+            "name": "TDC Sprint 52",
+            "state": "FUTURE",
+            "goal": "[6 Oct, 22 Oct]"
+        },
+        {
+            "id": 1866,
+            "sequence": 1772,
+            "name": "TDC Sprint 53",
+            "state": "FUTURE",
+            "goal": "[27 Oct, 12 Nov]"
+        },
+        {
+            "id": 692,
+            "sequence": 1773,
+            "name": "[Tech debt]",
+            "state": "FUTURE"
+        },
+        {
+            "id": 784,
+            "sequence": 1804,
+            "name": "[Waiting for others]",
+            "state": "FUTURE"
+        },
+        {
+            "id": 693,
+            "sequence": 1816,
+            "name": "[Quality debt]",
+            "state": "FUTURE"
+        },
+        {
+            "id": 1816,
+            "sequence": 1866,
+            "name": "Improvements",
+            "state": "FUTURE",
+            "goal": "List of all retrospectives actions"
+        }
+    ],
+    "rapidViewId": 217
+}

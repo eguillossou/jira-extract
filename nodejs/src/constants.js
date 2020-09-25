@@ -79,6 +79,10 @@ define("STR_SPRINT_RATIOCOMPLETEDISSUES","Completed issues ratio");
 define("STR_SPRINT_UNPLANNED_ISSUES","Unplanned issues");
 define("STR_SPRINT_STARTED_AND_COMPLETED_ISSUES","Started and completed issues");
 define("STR_SPRINT_NON_STARTED_AND_COMPLETED_ISSUES","Non Started and completed issues");
+define("STR_SPRINT_UNESTIMATED_ITEMS","Unestimated items");
+define("STR_SPRINT_PLANNED_STORYPOINTS","Planned story points");
+define("STR_SPRINT_COMPLETED_STORYPOINTS","Completed story points");
+
 
 define("STR_GRP_RAWMETRICS","Raw metrics")
 define("STR_GRP_RAWMETRICS_RESOLVED","Raw metrics resolved issues only")

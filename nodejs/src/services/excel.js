@@ -67,6 +67,9 @@ const initExcelFile = () => {
         {header: constants.STR_SPRINT_UNPLANNED_ISSUES, key:constants.STR_SPRINT_UNPLANNED_ISSUES, width: '25'},
         {header: constants.STR_SPRINT_STARTED_AND_COMPLETED_ISSUES, key:constants.STR_SPRINT_STARTED_AND_COMPLETED_ISSUES, width: '30'},
         {header: constants.STR_SPRINT_NON_STARTED_AND_COMPLETED_ISSUES, key:constants.STR_SPRINT_NON_STARTED_AND_COMPLETED_ISSUES, width: '30'},
+        {header: constants.STR_SPRINT_UNESTIMATED_ITEMS, key:constants.STR_SPRINT_UNESTIMATED_ITEMS, width: '25'},
+        {header: constants.STR_SPRINT_PLANNED_STORYPOINTS, key:constants.STR_SPRINT_PLANNED_STORYPOINTS, width: '25'},
+        {header: constants.STR_SPRINT_COMPLETED_STORYPOINTS, key:constants.STR_SPRINT_COMPLETED_STORYPOINTS, width: '25'},
     ];
 }
 const fillRowValueInExcel = (rowObject, column, value ) => {
@@ -198,6 +201,9 @@ const fillExcelWithSprintsDetails = (sprintDetails) => {
         fillRowValueInExcel(rowObject, constants.STR_SPRINT_UNPLANNED_ISSUES, details.unplannedissues );
         fillRowValueInExcel(rowObject, constants.STR_SPRINT_STARTED_AND_COMPLETED_ISSUES, details.startedandcompletedissues );
         fillRowValueInExcel(rowObject, constants.STR_SPRINT_NON_STARTED_AND_COMPLETED_ISSUES, details.nonstartedandcompletedissues );
+        fillRowValueInExcel(rowObject, constants.STR_SPRINT_UNESTIMATED_ITEMS, details.unestimatedissues );
+        fillRowValueInExcel(rowObject, constants.STR_SPRINT_PLANNED_STORYPOINTS, details.plannedstorypoints );
+        fillRowValueInExcel(rowObject, constants.STR_SPRINT_COMPLETED_STORYPOINTS, details.completedstorypoints );
         indexRow = indexRow + 1;
     }
 }
@@ -217,7 +223,7 @@ const groupRows = () => {
         { "title":constants.STR_GRP_RAWMETRICS_RESOLVED, "keyStart":constants.STR_KEY_RESOLVED, "keyEnd":constants.STR_CENTILE_80TH_LEADTIME, "color":"f2d9e6"},
         { "title":constants.STR_GRP_CYCLETIME_DISTRIBUTION, "keyStart":constants.STR_CYCLETIMERANGE, "keyEnd":constants.STR_CYCLETIMEDISTRIBUTION, "color":"ccffcc"},
         { "title":constants.STR_GRP_LEADTIME_DISTRIBUTION, "keyStart":constants.STR_LEADTIMERANGE, "keyEnd":constants.STR_LEADTIMEDISTRIBUTION, "color":"ccaacc"},
-        { "title":constants.STR_GRP_SPRINT, "keyStart":constants.STR_SPRINT_ID, "keyEnd":constants.STR_SPRINT_NON_STARTED_AND_COMPLETED_ISSUES, "color":"ccaaff"},
+        { "title":constants.STR_GRP_SPRINT, "keyStart":constants.STR_SPRINT_ID, "keyEnd":constants.STR_SPRINT_COMPLETED_STORYPOINTS, "color":"ccaaff"},
     ];
     const getCellForStyle = (_sheet, _key, _rowNumber) => {
         return(_sheet.getRow(_rowNumber).getCell(_sheet.getColumn(_key).number));

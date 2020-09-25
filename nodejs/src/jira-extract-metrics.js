@@ -128,6 +128,7 @@ const parseIssues = ( json ) => {
         (issueObject[constants.STR_FINALCTIME] !== undefined ? issueObject[constants.STR_FINALCTIME]:0);
         
         issueObject.sprintlist = issue.fields.customfield_11070.map(value => value.match("name=[^,]+")[0].replace("name=",""));
+        issueObject.storypoint = issue.fields.customfield_10150;
         
         internalArray.push(issueObject);
     }//end parsing issues
@@ -149,7 +150,6 @@ const parseIdNameFromSprints = (json) => {
     }
     return(arrSprint);
 }
-
 const calculateDistributionCycleTime = (internalArray) => {
     var freqCT = {};
     const distributionCycleTime = [];
@@ -194,7 +194,10 @@ const getCompleteAndUnCompleteIssueBySprint = (issueArray,jsonSprintDetails) => 
                         incompletedissues : 0,
                         unplannedissues : 0,
                         startedandcompletedissues: 0,
-                        nonstartedandcompletedissues: 0
+                        nonstartedandcompletedissues: 0,
+                        plannedstorypoints: 0,
+                        completedstorypoints: 0,
+                        unestimatedissues: 0
                     });
             }
             if( issue.sprintlist.includes(sprint.name)) {
@@ -205,7 +208,7 @@ const getCompleteAndUnCompleteIssueBySprint = (issueArray,jsonSprintDetails) => 
                 }
                 if( issue[constants.STR_PROGRESSDATE] !== undefined &&
                     issue.resolutiondate !== undefined &&
-                    new Date(issue.resolutiondate)<= new Date(sprint.enddate)) {
+                    new Date(issue.resolutiondate)<= new Date(sprint.completedate)) {
                     if( new Date(issue[constants.STR_PROGRESSDATE])>= new Date(sprint.startdate)) {
                         selectedSprint.startedandcompletedissues = selectedSprint.startedandcompletedissues+1;
                     } else {
@@ -213,10 +216,18 @@ const getCompleteAndUnCompleteIssueBySprint = (issueArray,jsonSprintDetails) => 
                     }
                 }
                 if( issue.resolutiondate !== undefined &&
-                new Date(issue.resolutiondate) <= new Date(sprint.enddate)) {
+                new Date(issue.resolutiondate) <= new Date(sprint.completedate)) {
                     selectedSprint.completedissues = selectedSprint.completedissues +1;
+                    if(issue.storypoint !== null) {
+                        selectedSprint.completedstorypoints = selectedSprint.completedstorypoints +issue.storypoint;
+                    }
                 } else {
                     selectedSprint.incompletedissues = selectedSprint.incompletedissues +1;
+                }
+                if(issue.storypoint !== null) {
+                    selectedSprint.plannedstorypoints = selectedSprint.plannedstorypoints +issue.storypoint;
+                } else {
+                    selectedSprint.unestimatedissues = selectedSprint.unestimatedissues+1;
                 }
             }
         })
@@ -251,7 +262,7 @@ const main = async () => {
                 // MOCK INSIDE
                 // working locally to avoid calls to http
                 if(isMock) {
-                    jsonSprintDetail = { "data": JSON.parse(fs.readFileSync(path.join(__dirname,'mock/resSprintId1772.json'), 'utf8'))};
+                    jsonSprintDetail = { "data": JSON.parse(fs.readFileSync(path.join(__dirname,'mock/resSprintIds.json'), 'utf8'))};
                 } else {
                     jsonSprintDetail = await rest.getRequest(`${constants.JIRA_URL_SPRINT_BY_ID}/${value.id}`,login, password, {});
                 }
