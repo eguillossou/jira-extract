@@ -1,5 +1,5 @@
 const axios = require('axios');
-const constants = require('../constants')
+const constants = require('../utils/constants')
 
 const paramAxiosIssues = (jql, startat, maxresults) =>
 {    return({

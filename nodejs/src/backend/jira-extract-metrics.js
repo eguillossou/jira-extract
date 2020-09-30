@@ -1,26 +1,30 @@
-#!/usr/bin/env node
+// #!/usr/bin/env node
 // const axios = require('axios');
-const constants = require('./constants')
-const rest = require('./services/rest');
+const constants = require('../utils/constants')
+const rest = require('../services/rest');
 // const { fill } = require('lodash');
 const fs = require('fs');
 const path = require('path');
-const excel = require('./services/excel')
-const { printError,printInfo,consoleError } = require('./print');
+const excel = require('../services/excel')
+const { printError,printInfo,consoleError } = require('../utils/print');
+const express = require('express');
 
 // const [ , , ...args ] = process.argv; // remove 2 first params
 
 const getJIRAVariables = () => {
     let { JIRA_LOGIN, JIRA_PASSWORD } = process.env;
+    let LOGIN='';
     if (!JIRA_LOGIN) {
-        JIRA_LOGIN="eguillossou"
-        printInfo(`CONFIG: JIRA_LOGIN environment variable set to default: `+JIRA_LOGIN)
+        LOGIN="eguillossou";
+        printInfo(`CONFIG: JIRA_LOGIN environment variable set to default: `+LOGIN);
+    } else {
+        LOGIN=JIRA_LOGIN;
     }
     if (!JIRA_PASSWORD) {
         printError(`CONFIG ERROR: JIRA_PASSWORD environment variable not set.`);
     }
 
-    return { login: JIRA_LOGIN, password: decodeURIComponent(escape( Buffer.from(JIRA_PASSWORD, 'base64').toString() )) };
+    return { login: LOGIN, password: decodeURIComponent(escape( Buffer.from(JIRA_PASSWORD, 'base64').toString() )) };
 }
 
 const switchDateOrTime = (transition,isDate=true) => {
@@ -235,6 +239,7 @@ const getCompleteAndUnCompleteIssueBySprint = (issueArray,jsonSprintDetails) => 
     return(frequencyComplete);
 }
 const main = async () => {
+    const app = express();
     const { login, password } = getJIRAVariables();
     // axios.interceptors.request.use(request => {
         //     console.log('Starting Request', request)
@@ -247,7 +252,7 @@ const main = async () => {
         let isMock = false;
         // working locally to avoid calls to http
         if(isMock) {
-            jsonSprints = { "data": JSON.parse(fs.readFileSync(path.join(__dirname,'mock/resSprints.json'), 'utf8'))}
+            jsonSprints = { "data": JSON.parse(fs.readFileSync(path.join(__dirname,'../mock/resSprints.json'), 'utf8'))}
         } else {
             printInfo(`Getting last ten Sprint list ${new Date().toLocaleString()}`);
             jsonSprints = await rest.getRequest(`${constants.JIRA_GREENHOPER_URL}/${constants.TDC_JIRA_BOARD_ID}`,login, password, rest.paramAxiosSprints);
@@ -262,7 +267,7 @@ const main = async () => {
                 // MOCK INSIDE
                 // working locally to avoid calls to http
                 if(isMock) {
-                    jsonSprintDetail = { "data": JSON.parse(fs.readFileSync(path.join(__dirname,'mock/resSprintIds.json'), 'utf8'))};
+                    jsonSprintDetail = { "data": JSON.parse(fs.readFileSync(path.join(__dirname,'../mock/resSprintIds.json'), 'utf8'))};
                 } else {
                     jsonSprintDetail = await rest.getRequest(`${constants.JIRA_URL_SPRINT_BY_ID}/${value.id}`,login, password, {});
                 }
@@ -280,7 +285,7 @@ const main = async () => {
         
         let jsonSprintIssues = {};
         if(isMock) {
-             jsonSprintIssues = { "data": JSON.parse(fs.readFileSync(path.join(__dirname,'mock/resIssues.json'), 'utf8'))}
+             jsonSprintIssues = { "data": JSON.parse(fs.readFileSync(path.join(__dirname,'../mock/resIssues.json'), 'utf8'))}
         } else {
             jql = constants.JIRA_QUERY.replace("${value}",`${jsonSprintDetails.map(v => v.id).join(', ')}`);
             printInfo(`Start searching issues ${new Date().toLocaleString()} with pagination`);
@@ -321,8 +326,20 @@ const main = async () => {
         excel.fillExcelWithSprintsDetails(jsonSprintDetailsUpdate);
         excel.groupRows();
         excel.writeExcelFile();
+
+        app.get('/', (req, res) => {
+            res.send('Hello World');
+        });
+        app.get('/api/sprints', (req, res) => {
+            res.send(jsonSprintDetailsUpdate);
+        });
     } catch (error) {
         consoleError(error);
+    }
+    
+    if (!module.parent) {
+    app.listen(3000);
+    console.log('Express started on port 3000');
     }
 }
 

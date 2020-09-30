@@ -1,6 +1,6 @@
-const constants = require('../constants')
+const constants = require('../utils/constants')
 const percentile = require('just-percentile');
-const { printInfo,consoleError } = require('../print');
+const { printInfo,consoleError } = require('../utils/print');
 const ExcelJS = require('exceljs');
 
 const workbook = new ExcelJS.Workbook();
