@@ -1,13 +1,11 @@
-// #!/usr/bin/env node
-// const axios = require('axios');
-const constants = require('../utils/constants')
-const rest = require('../services/rest');
-// const { fill } = require('lodash');
+const express = require('express');
 const fs = require('fs');
 const path = require('path');
+
 const excel = require('../services/excel')
+const constants = require('../utils/constants')
+const rest = require('../services/rest');
 const { printError,printInfo,consoleError } = require('../utils/print');
-const express = require('express');
 
 // const [ , , ...args ] = process.argv; // remove 2 first params
 
@@ -145,7 +143,16 @@ const parseIdNameFromSprints = (json) => {
     const arrSprint = [];
     const filterSprints = json.sprints.filter((sprint) => 
     sprint.name.includes(constants.STR_EXP_FILTER_SPRINT) && sprint.state.includes("CLOSED"));
-    const lastTenSprints = filterSprints.filter((_, idx) => idx >filterSprints.length-11);
+    const lastTenSprints = (filterSprints.filter((_, idx) => idx >filterSprints.length-11))
+    .sort((a, b) => {
+        if (a.name > b.name) {
+          return 1;
+        }
+        if (a.name < b.name) {
+          return -1;
+        }
+        return 0;
+    });
     for(let sprintNb in lastTenSprints) {
         arrSprint[sprintNb] = {
             "id": lastTenSprints[sprintNb].id,
@@ -338,8 +345,8 @@ const main = async () => {
     }
     
     if (!module.parent) {
-    app.listen(3000);
-    console.log('Express started on port 3000');
+    //app.listen(3000);
+    //console.log('Express started on port 3000');
     }
 }
 
