@@ -7,8 +7,6 @@ const constants = require('../utils/constants')
 const rest = require('../services/rest');
 const { printError,printInfo,consoleError } = require('../utils/print');
 
-// const [ , , ...args ] = process.argv; // remove 2 first params
-
 const getJIRAVariables = () => {
     let { JIRA_LOGIN, JIRA_PASSWORD } = process.env;
     let LOGIN='';
@@ -248,10 +246,6 @@ const getCompleteAndUnCompleteIssueBySprint = (issueArray,jsonSprintDetails) => 
 const main = async () => {
     const app = express();
     const { login, password } = getJIRAVariables();
-    // axios.interceptors.request.use(request => {
-        //     console.log('Starting Request', request)
-        //     return request
-        //   })
     
     try {
         let jsonSprints = {};
