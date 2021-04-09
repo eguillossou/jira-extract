@@ -248,15 +248,22 @@ const main = async () => {
     const { login, password } = getJIRAVariables();
     
     try {
-        let jsonSprints = {};
         // MOCK INSIDE
         let isMock = false;
+        // let jsonlistLabels = {};
+        // jsonlistLabels = await rest.getRequest(constants.JIRA_SEARCH_URL, login, password, rest.paramAxiosIssues("project = TDC and labels is not empty", 0, 500));
+        // for(let issueIdx in jsonlistLabels.issues){
+        //     printInfo(`label: ${json.issues[issueIdx].fields.labels}`);
+        // }
+        // process.exit(0);
+
+        let jsonSprints = {};
         // working locally to avoid calls to http
         if(isMock) {
             jsonSprints = { "data": JSON.parse(fs.readFileSync(path.join(__dirname,'../mock/resSprints.json'), 'utf8'))}
         } else {
             printInfo(`Getting last ten Sprint list ${new Date().toLocaleString()}`);
-            jsonSprints = await rest.getRequest(`${constants.JIRA_GREENHOPER_URL}/${constants.TDC_JIRA_BOARD_ID}`,login, password, rest.paramAxiosSprints);
+            jsonSprints = await rest.getRequest(`${constants.JIRA_GREENHOPER_URL}/${constants.JIRA_BOARD_ID}`,login, password, rest.paramAxiosSprints);
         }
         
         const arrSprint = parseIdNameFromSprints(jsonSprints.data);
@@ -291,10 +298,10 @@ const main = async () => {
             jql = constants.JIRA_QUERY.replace("${value}",`${jsonSprintDetails.map(v => v.id).join(', ')}`);
             printInfo(`Start searching issues ${new Date().toLocaleString()} with pagination`);
             let startat = 0;
-            jsonSprintIssues = await rest.getRequest(constants.JIRA_SEARCH_URL, login, password, rest.paramAxiosIssues(jql, startat, constants.TDC_JIRA_ISSUE_PAGINATION));
+            jsonSprintIssues = await rest.getRequest(constants.JIRA_SEARCH_URL, login, password, rest.paramAxiosIssues(jql, startat, constants.JIRA_ISSUE_PAGINATION));
             const listFn = [];
-            for(let i = 1;i<=Math.floor(jsonSprintIssues.data.total/constants.TDC_JIRA_ISSUE_PAGINATION);i++) {
-                listFn.push(rest.getRequest(constants.JIRA_SEARCH_URL, login, password, rest.paramAxiosIssues(jql, constants.TDC_JIRA_ISSUE_PAGINATION*i, constants.TDC_JIRA_ISSUE_PAGINATION)));
+            for(let i = 1;i<=Math.floor(jsonSprintIssues.data.total/constants.JIRA_ISSUE_PAGINATION);i++) {
+                listFn.push(rest.getRequest(constants.JIRA_SEARCH_URL, login, password, rest.paramAxiosIssues(jql, constants.JIRA_ISSUE_PAGINATION*i, constants.JIRA_ISSUE_PAGINATION)));
             }
             const issuesPaginated = await Promise.all(listFn.map(fn => fn));
             for (const response in issuesPaginated) {
