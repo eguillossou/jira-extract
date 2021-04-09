@@ -8,7 +8,7 @@ const paramAxiosIssues = (jql, startat, maxresults) =>
                 "jql": jql,
                 "startAt":startat,
                 "maxResults": maxresults,
-                "fields":"created,resolutiondate,issuetype,summary,customfield_11070,customfield_10150"
+                "fields":"created,resolutiondate,issuetype,summary,customfield_11070,customfield_10150,labels"
                 }
     });
 };
