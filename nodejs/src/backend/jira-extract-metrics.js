@@ -260,7 +260,7 @@ const main = async () => {
         let jsonSprints = {};
         // working locally to avoid calls to http
         if(isMock) {
-            jsonSprints = { "data": JSON.parse(fs.readFileSync(path.join(__dirname,'../mock/resSprints.json'), 'utf8'))}
+            jsonSprints = { "data": JSON.parse(fs.readFileSync(path.join(__dirname,'../mock/resSprints.json'), 'utf8'))};
         } else {
             printInfo(`Getting last ten Sprint list ${new Date().toLocaleString()}`);
             jsonSprints = await rest.getRequest(`${constants.JIRA_GREENHOPER_URL}/${constants.JIRA_BOARD_ID}`,login, password, rest.paramAxiosSprints);
@@ -293,7 +293,7 @@ const main = async () => {
         
         let jsonSprintIssues = {};
         if(isMock) {
-             jsonSprintIssues = { "data": JSON.parse(fs.readFileSync(path.join(__dirname,'../mock/resIssues.json'), 'utf8'))}
+             jsonSprintIssues = { "data": JSON.parse(fs.readFileSync(path.join(__dirname,'../mock/resIssues.json'), 'utf8'))};
         } else {
             jql = constants.JIRA_QUERY.replace("${value}",`${jsonSprintDetails.map(v => v.id).join(', ')}`);
             printInfo(`Start searching issues ${new Date().toLocaleString()} with pagination`);
@@ -330,7 +330,7 @@ const main = async () => {
         let sprintCompleteAndInComplete = getCompleteAndUnCompleteIssueBySprint(issueArray,jsonSprintDetails);
 
         const sprintCompleteAndInCompleteUpdated = sprintCompleteAndInComplete.map(({id, ...good}) => good );
-        const jsonSprintDetailsUpdate  = jsonSprintDetails.map((item,index) => item = {...item, ...sprintCompleteAndInCompleteUpdated[index]})
+        const jsonSprintDetailsUpdate  = jsonSprintDetails.map((item,index) => item = {...item, ...sprintCompleteAndInCompleteUpdated[index]});
         excel.fillExcelWithSprintsDetails(jsonSprintDetailsUpdate);
         excel.groupRows();
         excel.writeExcelFile();
