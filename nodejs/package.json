@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "hot-loader": "0.0.0",
-    "lodash": "^4.17.20",
+    "lodash": "^4.17.21",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-hot-loader": "^4.12.21",
