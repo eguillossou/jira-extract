@@ -4,12 +4,15 @@ function define(name, value) {
         enumerable: true
     });
 }
+define("EXCEL_FILE_NAME","reportjira-js-full-dga.xlsx");
 
 //TDC Board
 // define("JIRA_BOARD_ID",217);
-
 //TDP Board
-define("JIRA_BOARD_ID",131);
+// define("JIRA_BOARD_ID",131);
+//DGA Board
+define("JIRA_BOARD_ID",743);
+
 define("JIRA_SEARCH_URL","https://jira.talendforge.org/rest/api/2/search");
 define("JIRA_URL_SPRINT_BY_ID","https://jira.talendforge.org/rest/agile/1.0/sprint");
 define("JIRA_GREENHOPER_URL",`https://jira.talendforge.org/rest/greenhopper/1.0/sprintquery`);
@@ -17,15 +20,15 @@ define("JIRA_GREENHOPER_URL",`https://jira.talendforge.org/rest/greenhopper/1.0/
 //define("JIRA_QUERY","project = TDC AND issuetype in (Bug, \"New Feature\", \"Work Item\") AND Sprint in (${value}) ORDER BY labels ASC, RANK");
 //define("JIRA_QUERY_SPRINTS","project = TDC AND sprint in (closedSprints(),futureSprints(),openSprints())");
 
-define("JIRA_QUERY","project = TDP AND issuetype in (Bug, \"New Feature\", \"Work Item\") AND Sprint in (${value}) ORDER BY labels ASC, RANK");
-define("JIRA_QUERY_SPRINTS","project = TDP AND sprint in (closedSprints(),futureSprints(),openSprints())");
+define("JIRA_QUERY","project in (TDC,TDP,TDS,DGA) AND issuetype in (Bug, \"New Feature\", \"Work Item\") AND Sprint in (${value}) AND labels in (dga-squad1) ORDER BY labels ASC, RANK");
+define("JIRA_QUERY_SPRINTS","project in (DGA) AND sprint in (closedSprints(),futureSprints(),openSprints())");
 
 //define("STR_EXP_FILTER_SPRINT","TDC Sprint");
-define("STR_EXP_FILTER_SPRINT","TDP");
+// define("STR_EXP_FILTER_SPRINT","TDP");
+define("STR_EXP_FILTER_SPRINT","DGA");
 // define("JIRA_SPRINT_PAGINATION",30);
 define("JIRA_ISSUE_PAGINATION",100);
 
-define("EXCEL_FILE_NAME","jira-report-js-full.xlsx");
 
 define("STR_KEY","Issue key");
 define("STR_TYPE","Issue Type");

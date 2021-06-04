@@ -140,7 +140,7 @@ const parseIdNameFromSprints = (json) => {
     // getting first row to fill (remove group row and header row)
     const arrSprint = [];
     const filterSprints = json.sprints.filter((sprint) => 
-    sprint.name.includes(constants.STR_EXP_FILTER_SPRINT) && sprint.state.includes("CLOSED"));
+    sprint.name.includes(constants.STR_EXP_FILTER_SPRINT) && sprint.state.includes("CLOSED") && !sprint.name.includes("TRR"));
     const lastTenSprints = (filterSprints.filter((_, idx) => idx >filterSprints.length-11))
     .sort((a, b) => {
         if (a.name > b.name) {
