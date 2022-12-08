@@ -19,7 +19,7 @@
     "react-dom": "^16.13.1",
     "react-hot-loader": "^4.12.21",
     "just-percentile": "1.0.1",
-    "express": "4.17.1"
+    "express": "4.18.2"
   },
   "devDependencies": {
     "@babel/core": "^7.11.4",
